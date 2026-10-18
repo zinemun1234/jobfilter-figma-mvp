@@ -1,0 +1,504 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"surface-dim":"#cfdaf2","on-primary":"#ffffff","outline-variant":"#c3c6d2","on-tertiary-container":"#82d19f","secondary":"#0060ac","on-tertiary-fixed-variant":"#00522f","primary-fixed":"#d5e3ff","secondary-fixed-dim":"#a4c9ff","on-background":"#111c2d","on-primary-fixed-variant":"#0b4686","inverse-on-surface":"#ecf1ff","background":"#f9f9ff","on-surface":"#111c2d","error-container":"#ffdad6","on-tertiary-fixed":"#002110","inverse-surface":"#263143","on-secondary":"#ffffff","on-surface-variant":"#424750","on-secondary-fixed":"#001c39","on-primary-container":"#9ec2ff","surface-container-lowest":"#ffffff","tertiary-fixed":"#a4f4bf","surface-container-high":"#dee8ff","primary-fixed-dim":"#a8c8ff","tertiary-fixed-dim":"#88d7a5","on-secondary-fixed-variant":"#004883","on-error":"#ffffff","inverse-primary":"#a8c8ff","surface-container-highest":"#d8e3fb","surface-bright":"#f9f9ff","error":"#ba1a1a","secondary-fixed":"#d4e3ff","on-tertiary":"#ffffff","secondary-container":"#5da6fd","surface-container-low":"#f0f3ff","outline":"#737781","primary":"#00386f","tertiary":"#004124","on-primary-fixed":"#001b3c","surface-variant":"#d8e3fb","on-error-container":"#93000a","on-secondary-container":"#003a6c","surface-tint":"#2f5fa0","surface":"#f9f9ff","primary-container":"#1a4f8f","surface-container":"#e7eeff","tertiary-container":"#005b35"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin":"1rem","gutter":"1rem","space-xl":"2rem","margin-lg":"2rem","space-lg":"1.25rem","space-sm":"0.5rem","gutter-lg":"1.5rem","space-xs":"0.25rem","space-md":"0.75rem","margin-md":"1.5rem"},"fontFamily":{"body-sm":["Hanken Grotesk"],"body-md":["Hanken Grotesk"],"display-lg-mobile":["Hanken Grotesk"],"label-sm":["Hanken Grotesk"],"display-lg":["Hanken Grotesk"],"label-md":["Hanken Grotesk"],"headline-sm":["Hanken Grotesk"],"body-lg":["Hanken Grotesk"],"code-sm":["JetBrains Mono"],"headline-md":["Hanken Grotesk"]},"fontSize":{"body-sm":["13px",{"lineHeight":"18px","letterSpacing":"0em","fontWeight":"400"}],"body-md":["14px",{"lineHeight":"20px","letterSpacing":"0em","fontWeight":"400"}],"display-lg-mobile":["26px",{"lineHeight":"34px","letterSpacing":"-0.02em","fontWeight":"700"}],"label-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.02em","fontWeight":"600"}],"display-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"700"}],"label-md":["13px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"600"}],"headline-sm":["18px",{"lineHeight":"26px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","letterSpacing":"-0.005em","fontWeight":"400"}],"code-sm":["12px",{"lineHeight":"16px","letterSpacing":"0em","fontWeight":"500"}],"headline-md":["24px",{"lineHeight":"32px","letterSpacing":"-0.015em","fontWeight":"600"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center gap-space-sm"><img alt="JobFilter Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-mK13nZ7XgyCEkXIeyDJnrkPoEY5agjUBNYv_3mBAtxWXoOmqisMIJv_uhg4eYd6cSyK9_AZaUbwXQz6K1EYsvq-cc7Ca9tVDd_qloeDJYzcgN6O3TNxcfv99-22XKfpFSkAeEKQQEfcVV0HjOo6F55wV78Kw9edEjQM0R_Z2NIQML3vvyy0fErsX_X8xAB6PNVCt0SYEymZL4fE1w6i1QowqknD5JshavJU4rELDBFpd-LVWD-yb"><span class="font-headline-sm text-headline-sm text-primary tracking-tight">JobFilter</span></div><div class="px-space-lg py-space-xs"><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">컴퓨터공학과 취업지원</span></div><nav class="flex flex-col gap-space-xs px-space-md mt-space-sm" data-active-classes="bg-primary-container text-on-primary font-label-md"><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-md text-body-md" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span>대시보드</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-md text-body-md" data-path="jobs" href="#"><span class="material-symbols-outlined text-[20px]">work_outline</span><span>공고 목록</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-md text-body-md" data-path="applications" href="#"><span class="material-symbols-outlined text-[20px]">assignment_turned_in</span><span>지원 관리</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-md text-body-md" data-path="resume-coaching" href="#"><span class="material-symbols-outlined text-[20px]">edit_note</span><span>자소서 코칭</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-md text-body-md" data-path="bookmarks" href="#"><span class="material-symbols-outlined text-[20px]">bookmark_border</span><span>북마크</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-md text-body-md" data-path="calendar" href="#"><span class="material-symbols-outlined text-[20px]">calendar_today</span><span>캘린더</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-md text-body-md" data-path="profile" href="#"><span class="material-symbols-outlined text-[20px]">person_outline</span><span>프로필</span></a></nav></div><div class="p-space-md m-space-md rounded-xl bg-surface-container flex items-center gap-space-md"><div class="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed-variant font-label-md text-label-md">김</div><div class="flex flex-col min-w-0 flex-1"><span class="font-label-md text-label-md text-on-surface truncate">김민준</span><span class="font-body-sm text-body-sm text-on-surface-variant truncate">컴퓨터공학 4학년</span></div><span class="material-symbols-outlined text-[18px] text-on-surface-variant">more_vert</span></div></aside><div class="pl-64 flex flex-col min-h-screen"><header class="fixed top-0 left-64 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md flex-1 max-w-xl"><div class="relative w-full"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span><input class="w-full h-10 pl-10 pr-4 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:outline-none focus:bg-surface-container-lowest transition-colors" placeholder="채용공고, 기술 스택, 자격요건 통합 검색..." type="search"></div></div><div class="flex items-center gap-space-lg"><span class="font-label-md text-label-md text-secondary hidden md:inline">컴퓨터공학과 커리어 센터</span><button aria-label="알림" class="relative p-space-xs rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant flex items-center justify-center"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-error text-on-error font-label-sm text-[10px]">3</span></button><div class="flex items-center gap-space-sm pl-space-sm"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTLnqM69o7JxVb-xF1KEqYsnTxJ_u-bDNRwuW5Q8WvEFk01tyD5nSBdZjZiJLwDx20_laQNods_qP6MrQoMRTiQkkoG8L9m6rl1JLfVAvwq55ujKlc9hVkaEVY2SjdPvWu4PIPzal7mSaBFr41_azXa6jABDhnggwSUZFyplsgNlRRd76RdpGhYqd9Z8Cr_1h4efuSEBWZ3QpNDGmboOLc7zfgyePSAEJIla9wAa8gc1P2nnaQocTb"><span class="material-symbols-outlined text-outline text-[18px]">expand_more</span></div></div></header><main class="w-full pt-16 flex-1 bg-surface px-space-lg py-space-lg"><div class="flex flex-col w-full">
+<!-- Top Breadcrumb & Status Tracker -->
+<div class="flex items-center justify-between pb-space-md mb-space-md">
+<nav class="flex items-center gap-space-xs font-label-md text-label-md text-on-surface-variant">
+<a class="hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[16px]">arrow_back</span>
+        공고 목록
+      </a>
+<span class="material-symbols-outlined text-[14px] text-outline-variant">chevron_right</span>
+<span class="text-on-surface-variant">클라우드/인프라</span>
+<span class="material-symbols-outlined text-[14px] text-outline-variant">chevron_right</span>
+<span class="text-primary font-semibold truncate max-w-xs md:max-w-md">당근마켓 Platform &amp; Cloud 인프라 엔지니어 (체험형 인턴)</span>
+</nav>
+<div class="hidden sm:flex items-center gap-space-sm bg-surface-container-high px-space-md py-1.5 rounded-full">
+<span class="inline-block w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-on-surface">컴공과 추천 공고 (실시간 검증 완료)</span>
+</div>
+</div>
+<!-- Main Hero Profile Header Card -->
+<section class="bg-surface-container-lowest rounded-xl p-space-lg lg:p-space-xl shadow-sm mb-space-lg relative overflow-hidden">
+<div class="absolute -top-24 -right-24 w-96 h-96 bg-primary-fixed/30 rounded-full blur-3xl pointer-events-none"></div>
+<div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-xl">
+<!-- Company Branding & Position Meta -->
+<div class="flex flex-col sm:flex-row items-start gap-space-lg max-w-3xl">
+<div class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-surface-container flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
+<div class="w-full h-full bg-gradient-to-br from-orange-500 to-amber-600 flex flex-col items-center justify-center text-white font-headline-md font-bold tracking-tight">
+<span>당근</span>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<div class="flex flex-wrap items-center gap-space-xs mb-1">
+<span class="font-label-md text-label-md text-on-surface font-bold">당근마켓 (Daangn)</span>
+<span class="text-outline-variant">•</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant">플랫폼엔지니어링팀</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-error-container text-on-error-container font-semibold">
+              D-5 (마감 2024.11.15 23:59)
+            </span>
+</div>
+<h1 class="font-headline-md text-headline-md text-primary leading-tight">
+            Platform &amp; Cloud 인프라 엔지니어 (체험형 인턴)
+          </h1>
+<div class="flex flex-wrap items-center gap-y-2 gap-x-4 pt-space-xs text-on-surface-variant font-body-sm text-body-sm">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-outline">location_on</span>
+<span>서울 서초구 (강남권 스마트오피스)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-outline">badge</span>
+<span>체험형 인턴 (3개월, 정규직 전환 기회 부여)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-outline">payments</span>
+<span class="text-on-surface font-semibold">월 320만원</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Match Score Ring & Action Group -->
+<div class="flex flex-col sm:flex-row items-center gap-space-xl w-full lg:w-auto pt-space-md lg:pt-0 justify-between lg:justify-end">
+<!-- SVG Match Progress Ring -->
+<div class="flex items-center gap-space-md bg-surface-container-low p-space-md rounded-xl w-full sm:w-auto">
+<div class="relative w-20 h-20 shrink-0">
+<svg class="w-full h-full transform -rotate-90" viewBox="0 0 80 80">
+<circle class="text-surface-container-high" cx="40" cy="40" fill="none" r="32" stroke="currentColor" stroke-width="6"></circle>
+<circle class="text-primary-container" cx="40" cy="40" fill="none" r="32" stroke="currentColor" stroke-dasharray="201.06" stroke-dashoffset="16.08" stroke-linecap="round" stroke-width="6"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-headline-sm text-headline-sm font-bold text-primary leading-none">92</span>
+<span class="font-label-sm text-[10px] text-secondary font-semibold">MATCH</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-primary font-bold">김민준 학생 매칭 92%</span>
+<span class="font-body-sm text-[12px] text-on-surface-variant leading-tight">클라우드/쿠버네티스 커리큘럼<br>직무 핵심 요건 최적합</span>
+</div>
+</div>
+<!-- Quick Top Action Group -->
+<div class="flex flex-col gap-space-xs w-full sm:w-44 shrink-0">
+<button class="w-full h-10 px-space-md bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-all flex items-center justify-center gap-1.5 shadow-sm" id="btn-save-kanban">
+<span class="material-symbols-outlined text-[18px]">view_kanban</span>
+<span>지원 관리에 추가</span>
+</button>
+<div class="flex gap-space-xs">
+<button class="flex-1 h-9 px-space-sm bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors flex items-center justify-center gap-1" id="btn-bookmark">
+<span class="material-symbols-outlined text-[17px] text-secondary" id="bookmark-icon">bookmark_border</span>
+<span id="bookmark-text">스크랩</span>
+</button>
+<a class="h-9 px-space-sm bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors flex items-center justify-center gap-1" href="https://about.daangn.com" rel="noopener noreferrer" target="_blank" title="채용 원문 사이트로 새창 이동">
+<span class="material-symbols-outlined text-[17px]">open_in_new</span>
+<span class="hidden xl:inline">공고원문</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Split Grid: Deep Match Analysis vs Specification Body -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg mb-28">
+<!-- Right Rail on Mobile / Left Column on Desktop: Match Intelligence Engine (5 cols) -->
+<div class="lg:col-span-5 flex flex-col gap-space-lg order-2 lg:order-1">
+<!-- Academic & Spec Evaluation Engine -->
+<section class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[22px]">analytics</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">학생 프로필 역량 대조 분석</h2>
+</div>
+<span class="font-label-sm text-label-sm text-secondary bg-secondary-fixed/50 px-2 py-0.5 rounded-full font-semibold">학과 알고리즘 분석</span>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs text-primary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span>매칭 분석 총평 가이드</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+            김민준 님의 보유 클라우드/컨테이너 스택과 <strong class="text-primary font-semibold">83% 이상 일치</strong>하며, 4학년 캡스톤 프로젝트의 마이크로서비스 배포 경험이 주요하게 반영되었습니다. <strong class="text-secondary font-semibold">Terraform 기초 실습 이력</strong>을 포트폴리오와 자소서에 명시하면 서류 합격 가능성이 매우 높습니다.
+          </p>
+</div>
+<!-- Tech Stack Match vs Gap Analysis -->
+<div class="flex flex-col gap-space-sm pt-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface font-semibold flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+              보유 일치 스킬 (6개 일치)
+            </span>
+<span class="font-code-sm text-code-sm text-secondary font-semibold">Match Rate 86%</span>
+</div>
+<div class="flex flex-wrap gap-1.5">
+<span class="px-2.5 py-1 rounded-md bg-primary-container text-on-primary font-code-sm text-code-sm flex items-center gap-1 shadow-xs">
+<span class="material-symbols-outlined text-[14px]">check</span>Docker
+            </span>
+<span class="px-2.5 py-1 rounded-md bg-primary-container text-on-primary font-code-sm text-code-sm flex items-center gap-1 shadow-xs">
+<span class="material-symbols-outlined text-[14px]">check</span>Kubernetes
+            </span>
+<span class="px-2.5 py-1 rounded-md bg-primary-container text-on-primary font-code-sm text-code-sm flex items-center gap-1 shadow-xs">
+<span class="material-symbols-outlined text-[14px]">check</span>Linux Kernel
+            </span>
+<span class="px-2.5 py-1 rounded-md bg-primary-container text-on-primary font-code-sm text-code-sm flex items-center gap-1 shadow-xs">
+<span class="material-symbols-outlined text-[14px]">check</span>AWS (EKS, VPC)
+            </span>
+<span class="px-2.5 py-1 rounded-md bg-primary-container text-on-primary font-code-sm text-code-sm flex items-center gap-1 shadow-xs">
+<span class="material-symbols-outlined text-[14px]">check</span>Go (Golang)
+            </span>
+<span class="px-2.5 py-1 rounded-md bg-primary-container text-on-primary font-code-sm text-code-sm flex items-center gap-1 shadow-xs">
+<span class="material-symbols-outlined text-[14px]">check</span>Git &amp; GitHub Actions
+            </span>
+</div>
+</div>
+<div class="flex flex-col gap-space-sm pt-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface font-semibold flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-outline-variant"></span>
+              보완 • 학습 권장 스킬 (우대사항)
+            </span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">자소서 코칭 추천</span>
+</div>
+<div class="flex flex-wrap gap-1.5">
+<span class="px-2.5 py-1 rounded-md bg-surface-container text-on-surface font-code-sm text-code-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-outline">add</span>Terraform
+            </span>
+<span class="px-2.5 py-1 rounded-md bg-surface-container text-on-surface font-code-sm text-code-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-outline">add</span>Helm Chart
+            </span>
+<span class="px-2.5 py-1 rounded-md bg-surface-container text-on-surface font-code-sm text-code-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-outline">add</span>Prometheus • Grafana
+            </span>
+</div>
+</div>
+<!-- Academic & Eligibility Checklist -->
+<div class="flex flex-col gap-space-xs pt-space-sm">
+<span class="font-label-md text-label-md text-on-surface font-semibold">전공 및 기본 지원 조건 검증</span>
+<div class="space-y-1.5">
+<div class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary-container text-[18px]">check_circle</span>
+<span class="font-body-sm text-body-sm">컴퓨터공학 / 소프트웨어 관련 전공</span>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary-container font-semibold">충족 (본전공)</span>
+</div>
+<div class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary-container text-[18px]">check_circle</span>
+<span class="font-body-sm text-body-sm">4학년 이상 재학생 또는 2025년 졸업예정자</span>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary-container font-semibold">충족 (4학년 1학기)</span>
+</div>
+<div class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary-container text-[18px]">check_circle</span>
+<span class="font-body-sm text-body-sm">인턴 근무 기간(3개월 풀타임) 오프라인 출근 가능</span>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary-container font-semibold">충족 (학점 인정 연계)</span>
+</div>
+</div>
+</div>
+<!-- Department Career Center Note -->
+<div class="mt-space-xs p-space-md rounded-xl bg-surface-container flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0">school</span>
+<div class="flex flex-col text-on-surface">
+<span class="font-label-md text-label-md font-semibold">학과 취업지원처 현장실습 학점 인정 안내</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant pt-0.5">
+              본 인턴십 합격 시 컴퓨터공학과 '산업체 현장실습 IV (전공선택 3학점)' 중복 인정 신청이 가능합니다. 서류 합격 후 학과 사무실로 승인서를 제출해 주세요.
+            </p>
+</div>
+</div>
+</section>
+<!-- Department Peer Placement Insights Mini-Widget -->
+<section class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm">
+<div class="flex items-center justify-between mb-space-md">
+<span class="font-label-md text-label-md text-on-surface font-semibold">당근마켓 컴공과 동문 취업 통계</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">최근 3년 데이터</span>
+</div>
+<div class="grid grid-cols-2 gap-space-sm">
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col">
+<span class="font-headline-sm text-headline-sm font-bold text-primary">14명</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">본교 출신 현직자</span>
+</div>
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col">
+<span class="font-headline-sm text-headline-sm font-bold text-secondary">71.4%</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">인턴 후 정규직 전환율</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Main Job Specification & Timeline (7 cols) -->
+<div class="lg:col-span-7 flex flex-col gap-space-lg order-1 lg:order-2">
+<!-- Content Tabs (Overview, Process, Culture) -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="flex border-b border-surface-container-high px-space-lg pt-space-xs bg-surface-container-low/50">
+<button class="px-space-md py-3 font-label-md text-label-md text-primary font-bold border-b-2 border-primary">
+            상세 모집 요강
+          </button>
+<button class="px-space-md py-3 font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors">
+            전형 프로세스
+          </button>
+<button class="px-space-md py-3 font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors">
+            복리후생 &amp; 개발문화
+          </button>
+</div>
+<div class="p-space-lg lg:p-space-xl flex flex-col gap-space-xl">
+<!-- Section 1: Major Duties -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center gap-space-xs text-primary">
+<span class="material-symbols-outlined text-[20px]">terminal</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">주요 업무 (담당 업무)</h3>
+</div>
+<ul class="space-y-2.5 font-body-md text-body-md text-on-surface pl-2">
+<li class="flex items-start gap-2">
+<span class="text-secondary font-bold">•</span>
+<span>수천만 사용자를 서빙하는 당근마켓 Kubernetes 클러스터 운영 및 자동화 파이프라인 고도화 지원</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="text-secondary font-bold">•</span>
+<span>AWS EKS 기반의 멀티 클러스터 인프라 모니터링 시스템 개선 및 이상 트래픽 감지 룰셋 튜닝</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="text-secondary font-bold">•</span>
+<span>사내 개발 조직을 위한 내부 개발자 플랫폼(Internal Developer Platform) CLI 도구 Go 언어 기반 개발</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="text-secondary font-bold">•</span>
+<span>IaC(Infrastructure as Code) 프레임워크를 활용한 클라우드 리소스 생성 및 변경 워크플로우 검증</span>
+</li>
+</ul>
+</div>
+<!-- Section 2: Requirements -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center gap-space-xs text-primary">
+<span class="material-symbols-outlined text-[20px]">assignment_turned_in</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">지원 자격 (필수 요건)</h3>
+</div>
+<ul class="space-y-2.5 font-body-md text-body-md text-on-surface pl-2">
+<li class="flex items-start gap-2">
+<span class="text-secondary font-bold">•</span>
+<span>컴퓨터공학, 소프트웨어공학 또는 이에 준하는 전산 기초 지식(네트워크, 운영체제, 자료구조)을 탄탄히 갖추신 분</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="text-secondary font-bold">•</span>
+<span>Linux 환경에서 시스템 명령어를 능숙하게 활용하고 컨테이너(Docker) 기반 애플리케이션 빌드 경험이 있으신 분</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="text-secondary font-bold">•</span>
+<span>Go, Python 중 최소 한 가지 언어로 시스템 레벨 스크립팅 또는 API 서버 구축이 가능하신 분</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="text-secondary font-bold">•</span>
+<span>주 5일 전일제 오프라인 인턴 근무가 가능하신 4학년 재학생 또는 기졸업자</span>
+</li>
+</ul>
+</div>
+<!-- Section 3: Preferences -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center gap-space-xs text-primary">
+<span class="material-symbols-outlined text-[20px]">stars</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">우대 사항 (가산점 요건)</h3>
+</div>
+<ul class="space-y-2.5 font-body-md text-body-md text-on-surface pl-2">
+<li class="flex items-start gap-2">
+<span class="text-outline-variant font-bold">•</span>
+<span>AWS, GCP 등 퍼블릭 클라우드 환경에서 서비스를 직접 구축하거나 배포해 본 프로젝트 경험</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="text-outline-variant font-bold">•</span>
+<span>Terraform, Helm, ArgoCD 등 클라우드 네이티브 DevOps 생태계 툴체인 사용 경험</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="text-outline-variant font-bold">•</span>
+<span>오픈소스 프로젝트에 기여하거나 플랫폼 관련 기술 블로그를 꾸준히 운영한 경험</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="text-outline-variant font-bold">•</span>
+<span>CS 동아리 또는 학술대회에서 인프라 아키텍처 설계 수상 이력이 있는 분</span>
+</li>
+</ul>
+</div>
+<!-- Section 4: Recruitment Process (Pipeline Visualization) -->
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center gap-space-xs text-primary">
+<span class="material-symbols-outlined text-[20px]">alt_route</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">전형 절차</h3>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-space-sm">
+<div class="p-space-md rounded-xl bg-surface-container flex flex-col items-center text-center relative overflow-hidden">
+<span class="font-code-sm text-code-sm text-secondary font-bold mb-1">STAGE 01</span>
+<span class="font-headline-sm text-[16px] font-bold text-on-surface">서류 전형</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant mt-1">포트폴리오 • 자소서</span>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container flex flex-col items-center text-center">
+<span class="font-code-sm text-code-sm text-secondary font-bold mb-1">STAGE 02</span>
+<span class="font-headline-sm text-[16px] font-bold text-on-surface">과제 전형</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant mt-1">인프라 구축 테스크 (72h)</span>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container flex flex-col items-center text-center">
+<span class="font-code-sm text-code-sm text-secondary font-bold mb-1">STAGE 03</span>
+<span class="font-headline-sm text-[16px] font-bold text-on-surface">직무 면접</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant mt-1">CS 기초 • 과제 리뷰</span>
+</div>
+<div class="p-space-md rounded-xl bg-primary-container text-on-primary flex flex-col items-center text-center shadow-xs">
+<span class="font-code-sm text-code-sm text-on-primary-container font-bold mb-1">FINAL</span>
+<span class="font-headline-sm text-[16px] font-bold text-on-primary">최종 합격</span>
+<span class="font-body-sm text-[11px] text-on-primary-container mt-1">인턴십 시작 (12월 초)</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant italic">
+              ※ 각 전형 결과는 전형 종료 후 5영업일 이내에 JobFilter 지원 관리 및 개별 이메일로 안내됩니다.
+            </p>
+</div>
+<!-- Section 5: Benefits & Culture -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center gap-space-xs text-primary">
+<span class="material-symbols-outlined text-[20px]">sentiment_satisfied</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">복리후생 및 근무 환경</h3>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm pt-space-xs">
+<div class="p-space-md rounded-lg bg-surface-container-low flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[22px]">laptop_mac</span>
+<div>
+<span class="font-label-md text-label-md text-on-surface font-semibold">최고급 장비 지급</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">MacBook Pro M3 Max + 4K 듀얼 모니터 세팅</p>
+</div>
+</div>
+<div class="p-space-md rounded-lg bg-surface-container-low flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[22px]">restaurant</span>
+<div>
+<span class="font-label-md text-label-md text-on-surface font-semibold">식대 및 간식 전액 지원</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">점심/저녁 식대 무제한 실비 지원, 사내 카페테리아 무료</p>
+</div>
+</div>
+<div class="p-space-md rounded-lg bg-surface-container-low flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[22px]">auto_stories</span>
+<div>
+<span class="font-label-md text-label-md text-on-surface font-semibold">도서 및 교육비 무제한</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">직무 관련 기술 서적, 온라인 강의, 클라우드 자격증 응시료</p>
+</div>
+</div>
+<div class="p-space-md rounded-lg bg-surface-container-low flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[22px]">supervisor_account</span>
+<div>
+<span class="font-label-md text-label-md text-on-surface font-semibold">1:1 전담 멘토링 배정</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">시니어 플랫폼 엔지니어 전담 멘토를 통한 코드 리뷰 및 성장</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating Sticky Action Dock (Bottom Bar) -->
+<div class="fixed bottom-0 left-64 right-0 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.06)] z-30 px-space-xl py-3 flex items-center justify-between border-t border-surface-container">
+<!-- Duplicate Application Status Check -->
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary-container text-[20px]">check_circle</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-bold">중복 지원 검증 완료</span>
+<span class="font-body-sm text-[12px] text-on-surface-variant">현재 당근마켓 진행 중인 지원 이력 없음 (정상 지원 가능)</span>
+</div>
+</div>
+<div class="hidden xl:flex items-center gap-1 pl-space-md border-l border-surface-container-high font-body-sm text-body-sm text-on-surface-variant">
+<span>자소서 항목 3개 등록됨</span>
+<span class="text-outline-variant">•</span>
+<span>예상 소요시간 25분</span>
+</div>
+</div>
+<!-- Interactive Call-To-Action Group -->
+<div class="flex items-center gap-space-md">
+<button class="hidden sm:flex h-11 px-space-lg bg-surface-container text-primary rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors items-center gap-1.5" id="dock-btn-kanban">
+<span class="material-symbols-outlined text-[18px]">view_kanban</span>
+<span>지원 관리에 담기</span>
+</button>
+<a class="h-11 px-space-xl bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-all flex items-center gap-2 shadow-md hover:shadow-lg" href="#">
+<span class="material-symbols-outlined text-[20px]">edit_note</span>
+<span class="text-[14px]">이 공고로 자소서 코칭 시작</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Micro-interaction Toast / Modal Notification (Hidden by default) -->
+<div class="fixed top-20 right-8 bg-surface-container-lowest text-on-surface p-space-md rounded-xl shadow-xl z-50 flex items-center gap-space-md transform translate-y-[-150%] opacity-0 transition-all duration-300" id="toast-notification">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[18px]" id="toast-icon">check</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold" id="toast-title">지원 관리에 추가되었습니다</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant" id="toast-desc">칸반보드 '지원 준비' 컬럼으로 자동 연동되었습니다.</span>
+</div>
+</div>
+</div>
+<script>
+  // Interactive micro-behaviors for Job Detail View
+  document.addEventListener('DOMContentLoaded', () => {
+    const kanbanBtn = document.getElementById('btn-save-kanban');
+    const dockKanbanBtn = document.getElementById('dock-btn-kanban');
+    const bookmarkBtn = document.getElementById('btn-bookmark');
+    const bookmarkIcon = document.getElementById('bookmark-icon');
+    const bookmarkText = document.getElementById('bookmark-text');
+    const toast = document.getElementById('toast-notification');
+    const toastTitle = document.getElementById('toast-title');
+    const toastDesc = document.getElementById('toast-desc');
+    const toastIcon = document.getElementById('toast-icon');
+
+    function showToast(title, desc, iconName) {
+      toastTitle.textContent = title;
+      toastDesc.textContent = desc;
+      toastIcon.textContent = iconName || 'check';
+      toast.classList.remove('translate-y-[-150%]', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-[-150%]', 'opacity-0');
+      }, 3000);
+    }
+
+    let isSavedToKanban = false;
+    function handleKanbanClick() {
+      if (!isSavedToKanban) {
+        isSavedToKanban = true;
+        kanbanBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">done_all</span><span>지원 관리 추가됨</span>';
+        kanbanBtn.classList.remove('bg-primary');
+        kanbanBtn.classList.add('bg-tertiary-container', 'text-on-tertiary');
+        if (dockKanbanBtn) {
+          dockKanbanBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">done_all</span><span>보관됨</span>';
+        }
+        showToast('지원 관리 칸반보드에 등록됨', 'F-13 지원 관리에서 마감일과 일정을 확인하세요.', 'view_kanban');
+      } else {
+        isSavedToKanban = false;
+        kanbanBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">view_kanban</span><span>지원 관리에 추가</span>';
+        kanbanBtn.classList.add('bg-primary');
+        kanbanBtn.classList.remove('bg-tertiary-container', 'text-on-tertiary');
+        if (dockKanbanBtn) {
+          dockKanbanBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">view_kanban</span><span>지원 관리에 담기</span>';
+        }
+        showToast('지원 관리에서 제외됨', '해당 공고가 지원 준비 목록에서 삭제되었습니다.', 'delete');
+      }
+    }
+
+    if (kanbanBtn) kanbanBtn.addEventListener('click', handleKanbanClick);
+    if (dockKanbanBtn) dockKanbanBtn.addEventListener('click', handleKanbanClick);
+
+    let isBookmarked = false;
+    if (bookmarkBtn) {
+      bookmarkBtn.addEventListener('click', () => {
+        isBookmarked = !isBookmarked;
+        if (isBookmarked) {
+          bookmarkIcon.textContent = 'bookmark';
+          bookmarkIcon.style.fontVariationSettings = "'FILL' 1";
+          bookmarkText.textContent = '저장됨';
+          bookmarkBtn.classList.add('text-secondary');
+          showToast('북마크 보관함에 저장됨', '컴공과 북마크 목록에 등록되었습니다.', 'bookmark');
+        } else {
+          bookmarkIcon.textContent = 'bookmark_border';
+          bookmarkIcon.style.fontVariationSettings = "'FILL' 0";
+          bookmarkText.textContent = '스크랩';
+          bookmarkBtn.classList.remove('text-secondary');
+          showToast('북마크가 해제되었습니다', '북마크 보관함에서 삭제되었습니다.', 'bookmark_border');
+        }
+      });
+    }
+  });
+</script></main></div><script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script><script src="./app.js" defer></script></body></html>
