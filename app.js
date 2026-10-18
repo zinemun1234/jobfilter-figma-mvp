@@ -38,8 +38,81 @@
     'resume-coaching': 's15_coverletter.html',
     bookmarks: null,
     calendar: 's10_dashboard.html',
-    profile: 's27_profile.html'
+    profile: 's27_profile.html',
+    'company-post': 's31_company_post.html',
+    'company-applicants': 's33_applicants.html',
+    'admin-review': 's41_admin_review.html',
+    'admin-upload': 's42_admin.html'
   };
+
+  // 페이지 → 활성 메뉴 경로 매핑
+  var PAGE_TO_PATH = {
+    s10_dashboard: 'dashboard',
+    s11_listings: 'jobs',
+    s12_detail: 'jobs',
+    s14_kanban: 'applications',
+    s15_coverletter: 'resume-coaching',
+    s16_analysis: 'resume-coaching',
+    s27_profile: 'profile',
+    s31_company_post: 'company-post',
+    s33_applicants: 'company-applicants',
+    s41_admin_review: 'admin-review',
+    s42_admin: 'admin-upload',
+    index: 'dashboard'
+  };
+
+  var NAV_GROUPS = [
+    {
+      label: null,
+      items: [
+        { path: 'dashboard', icon: 'grid_view', text: '대시보드' },
+        { path: 'jobs', icon: 'work_outline', text: '공고 목록' },
+        { path: 'applications', icon: 'assignment_turned_in', text: '지원 관리' },
+        { path: 'resume-coaching', icon: 'edit_note', text: '자소서 코칭' },
+        { path: 'bookmarks', icon: 'bookmark_border', text: '북마크' },
+        { path: 'calendar', icon: 'calendar_today', text: '캘린더' },
+        { path: 'profile', icon: 'person_outline', text: '프로필' }
+      ]
+    },
+    {
+      label: '기업',
+      items: [
+        { path: 'company-post', icon: 'post_add', text: '공고 등록' },
+        { path: 'company-applicants', icon: 'group', text: '지원자 관리' }
+      ]
+    },
+    {
+      label: '관리자',
+      items: [
+        { path: 'admin-review', icon: 'fact_check', text: '공고 승인' },
+        { path: 'admin-upload', icon: 'upload_file', text: '일괄 등록' }
+      ]
+    }
+  ];
+
+  // 사이드바 nav 재구성 — 페이지별 활성 항목을 JS가 일관되게 표시
+  var navEl = qs('aside nav');
+  var activePath = PAGE_TO_PATH[PAGE] || null;
+  if (navEl) {
+    var BASE = 'flex items-center gap-space-md px-space-md py-space-sm rounded-lg transition-colors font-body-md text-body-md';
+    var IDLE = 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface';
+    var ACTIVE = 'bg-primary-container text-on-primary font-label-md shadow-sm';
+    var html = '';
+    NAV_GROUPS.forEach(function (g) {
+      if (g.label) {
+        html += '<div class="px-space-md pt-space-md pb-space-xs"><span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">' + g.label + '</span></div>';
+      }
+      g.items.forEach(function (it) {
+        var on = it.path === activePath;
+        html += '<a class="' + BASE + ' ' + (on ? ACTIVE : IDLE) + '" data-path="' + it.path + '" href="#">' +
+          '<span class="material-symbols-outlined text-[20px]"' + (on ? ' style="font-variation-settings:\'FILL\' 1"' : '') + '>' + it.icon + '</span>' +
+          '<span>' + it.text + '</span>' +
+          (on ? '<span class="ml-auto w-1.5 h-1.5 rounded-full bg-on-primary"></span>' : '') +
+          '</a>';
+      });
+    });
+    navEl.innerHTML = html;
+  }
 
   qsa('[data-path]').forEach(function (a) {
     a.style.cursor = 'pointer';
