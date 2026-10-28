@@ -22,7 +22,7 @@ def swap(fname, pairs):
 
 def replace_content(fname, content):
     s = read(fname)
-    s2, n = MAIN_RE.subn(lambda m: m.group(1) + '\n' + content, s, count=1)
+    s2, n = MAIN_RE.subn(lambda m: m.group(1) + '\n' + content + '\n' + m.group(2), s, count=1)
     assert n == 1, fname
     write(fname, s2)
 
