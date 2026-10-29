@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>JobFilter — 구현 변경사항 정리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Material+Symbols+Outlined" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Hanken Grotesk',sans-serif; }
+  body { background:#f0f3ff; padding:32px; }
+  .wrap { display:flex; flex-direction:column; gap:20px; max-width:1280px; margin:0 auto; }
+  .head { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .head .tag { background:#00386f; color:#fff; font-size:11px; font-weight:700; letter-spacing:.08em; padding:4px 10px; border-radius:999px; }
+  .head h1 { font-size:22px; font-weight:800; color:#001d3d; }
+  .head p { font-size:12px; color:#5a6580; width:100%; }
+  h2 { font-size:16px; font-weight:800; color:#001d3d; }
+  h2 .sub { font-size:11px; font-weight:500; color:#5a6580; margin-left:8px; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .card { background:#fff; border:1px solid #dee8ff; border-radius:12px; padding:16px 18px; box-shadow:0 1px 3px rgba(0,29,61,.06); }
+  .card .ico { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:8px; background:#d5e3ff; color:#00386f; font-size:18px; margin-bottom:8px; }
+  .card h3 { font-size:13.5px; font-weight:800; color:#001d3d; margin-bottom:6px; }
+  .card p { font-size:11.5px; line-height:1.6; color:#2b3242; }
+  .card p b { color:#00386f; }
+  table { width:100%; border-collapse:collapse; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 1px 3px rgba(0,29,61,.06); }
+  th { background:#00386f; color:#dce8ff; font-size:11px; font-weight:700; text-align:left; padding:10px 14px; letter-spacing:.04em; }
+  td { font-size:11.5px; line-height:1.55; color:#2b3242; padding:9px 14px; border-top:1px solid #eef2fb; vertical-align:top; }
+  tr:nth-child(even) td { background:#f7f9ff; }
+  td.scr { font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#00386f; white-space:nowrap; font-weight:600; }
+  td.before { color:#8a93a8; }
+  td b { color:#00386f; }
+  .shots { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+  .shot { background:#fff; border:1px solid #dee8ff; border-radius:12px; overflow:hidden; box-shadow:0 1px 3px rgba(0,29,61,.06); }
+  .shot img { width:100%; display:block; }
+  .shot .cap { padding:9px 14px; font-size:11.5px; color:#2b3242; border-top:1px solid #eef2fb; }
+  .shot .cap b { color:#00386f; font-family:'JetBrains Mono',monospace; font-size:10.5px; margin-right:6px; }
+  .footer { background:#00386f; border-radius:10px; padding:14px 18px; color:#dce8ff; font-size:12px; line-height:1.7; }
+  .footer b { color:#fff; }
+  .footer .mono { font-family:'JetBrains Mono',monospace; font-size:11px; color:#9ec3ff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <span class="tag">IMPLEMENTATION LOG</span>
+    <h1>구현 변경사항 정리 — Figma 시안 → 동작 데모</h1>
+    <p>이 파일의 Figma 화면은 <b>디자인 시안</b>입니다. 아래는 그 시안을 토대로 만든 <b>실제 동작 데모</b>(figmasrc.vercel.app)에서 무엇이 어떻게 바뀌었는지에 대한 기록입니다 · 2026-10-29 · 배포본 af6acd8</p>
+  </div>
+
+  <h2>한눈에 보는 변경<span class="sub">디자인 목업 → 계산 엔진 데모</span></h2>
+  <div class="cards">
+    <div class="card"><span class="material-symbols-outlined ico">calculate</span><h3>고정 숫자 → 실제 계산</h3>
+      <p>시안에 박혀 있던 점수(92·88·84…)와 통계(84건·86%)를 전부 제거하고, <b>실제 매칭 엔진(matchJob)</b>과 <b>규칙 채점기(scoreResume)</b>가 매번 계산한 값으로 표시합니다.</p></div>
+    <div class="card"><span class="material-symbols-outlined ico">database</span><h3>클릭만 되던 화면 → 상태 있는 데모</h3>
+      <p>북마크·칸반 이동·체크리스트·자소서 초안·승인 처리가 전부 <b>localStorage에 영속</b>됩니다. 페이지를 이동하거나 새로고침해도 상태가 유지됩니다.</p></div>
+    <div class="card"><span class="material-symbols-outlined ico">code</span><h3>구현체와 같은 로직</h3>
+      <p>브라우저 데모는 Next.js 구현체(jobfilter-web)의 로직을 <b>그대로 포팅</b>한 것 — 같은 프로필·같은 공고면 어디서든 같은 점수가 나옵니다. 실서비스 구현은 로컬 시연으로 확인할 수 있습니다.</p></div>
+  </div>
+
+  <h2>화면별 변경 내역<span class="sub">16개 화면 전수 — 시안 대비 실제 동작</span></h2>
+  <table>
+    <tr><th style="width:110px">화면</th><th style="width:34%">Figma 시안 (정적)</th><th>배포 데모 (동작)</th></tr>
+    <tr><td class="scr">s10 대시보드</td><td class="before">KPI 숫자 고정, 프로필 게이지 장식</td><td>칸반 상태에서 <b>지원 중·면접 건수 계산</b>, 프로필 완성도를 보유 스킬 수로 산출</td></tr>
+    <tr><td class="scr">s11 공고 목록</td><td class="before">점수 92/88/84 고정, "총 47건"</td><td><b>matchJob 실측 점수</b>(카카오 95·당근 80·토스 60·나머지 20), 검색 필터, 건수 동적 동기화</td></tr>
+    <tr><td class="scr">s12 공고 상세</td><td class="before">단일 정적 공고</td><td><b>?job=N 파라미터</b>로 6개 공고 각각 하이드레이션, 북마크 토글·칸반 추가 버튼 동작</td></tr>
+    <tr><td class="scr">s13 북마크</td><td class="before">— (시안에 없던 신규 화면)</td><td>저장된 북마크 카드 렌더, 해제 버튼, 건수 배지 동기화</td></tr>
+    <tr><td class="scr">s14 칸반</td><td class="before">드래그만 되는 장식 보드</td><td>카드 추가·단계 이동 시 <b>상태 이력 기록 + 영속</b>, 타이틀 "총 N개" 동기화 → s81 통계와 같은 데이터 공유</td></tr>
+    <tr><td class="scr">s14b 체크리스트</td><td class="before">체크 아이콘 장식</td><td>항목 토글 → 영속 + 카드별 N/M 진행 배지 갱신, 새로고침 후에도 유지</td></tr>
+    <tr><td class="scr">s15 자소서</td><td class="before">텍스트만 있는 에디터</td><td>초안 자동 저장·글자수 카운터, <b>버전 스냅샷</b> 저장 → s16 분석이 초안 기준으로 재채점</td></tr>
+    <tr><td class="scr">s16 분석</td><td class="before">86점·항목 점수 고정</td><td><b>scoreResume 실시간 재채점</b> — 원형 게이지·항목 막대·강점/약점·키워드 칩이 초안 내용에 따라 전부 바뀜</td></tr>
+    <tr><td class="scr">s17 히트맵</td><td class="before">칩 수치 고정</td><td>keywordCoverage 실측 — 정확 일치/별칭 포함 커버리지 %, 칩별 빈도·별칭(*) 표시</td></tr>
+    <tr><td class="scr">s27 프로필</td><td class="before">점수 예시 고정</td><td>보유 스킬 기준 최고·평균 매칭 점수와 완성도 % 실측 표시</td></tr>
+    <tr><td class="scr">s31 공고 등록</td><td class="before">제출해도 반영 없음</td><td>등록 → 저장 → <b>s41 승인 큐에 행 생성</b> → 승인 시 s11 목록에 "게시 중" 표시 (체인 완성)</td></tr>
+    <tr><td class="scr">s33 지원자</td><td class="before">8행만 있는 표</td><td><b>코호트 24명</b>을 matchJobWith로 실측 정렬 → 8명씩 페이지네이션, 요약 카운트 실측</td></tr>
+    <tr><td class="scr">s41 승인 큐</td><td class="before">승인해도 되돌아감</td><td>승인/반려 클릭 → 상태 영속 + 탭 카운트 갱신, 기업 등록 공고도 같은 큐에서 처리</td></tr>
+    <tr><td class="scr">s42 일괄 등록</td><td class="before">배지 토글 무반응</td><td>승인됨/보류됨 배지 토글 → localStorage 영속, 제외 행(중복·마감)은 토글 없음</td></tr>
+    <tr><td class="scr">s43 스킬 사전</td><td class="before">읽기 전용 예시 화면</td><td><b>매칭 테스터 입력창</b> — 타이핑 즉시 별칭→표준 표기 매핑 결과 표시</td></tr>
+    <tr><td class="scr">s81 학과 통계</td><td class="before">"총 지원 84건" 고정</td><td>칸반 보드에서 <b>퍼널·전환율·바 너비 전부 계산</b> — 칸반을 움직이면 통계가 바뀜</td></tr>
+  </table>
+
+  <h2>배포 화면 캡처<span class="sub">figmasrc.vercel.app 실제 렌더 · 2026-10-29</span></h2>
+  <div class="shots">
+    <div class="shot"><img src="shots/s11_listings.png" alt="공고 목록"><div class="cap"><b>s11</b>공고 목록 — 점수가 matchJob 실측값(95/80/60/20), 검색·건수 동적</div></div>
+    <div class="shot"><img src="shots/s16_analysis.png" alt="자소서 분석"><div class="cap"><b>s16</b>자소서 분석 — 원형 게이지·항목 막대가 실제 채점 결과로 렌더</div></div>
+    <div class="shot"><img src="shots/s14_kanban.png" alt="칸반"><div class="cap"><b>s14</b>칸반 — 카드 이동·이력 기록·통계 연동</div></div>
+    <div class="shot"><img src="shots/s14b_checklist.png" alt="체크리스트"><div class="cap"><b>s14b</b>체크리스트 — 토글 영속 + 진행 배지</div></div>
+    <div class="shot"><img src="shots/s33_applicants.png" alt="지원자"><div class="cap"><b>s33</b>지원자 테이블 — 24명 코호트 실측 정렬 + 페이지네이션</div></div>
+    <div class="shot"><img src="shots/s41_admin_review.png" alt="승인 큐"><div class="cap"><b>s41</b>승인 큐 — 승인/반려 영속 + 탭 카운트</div></div>
+    <div class="shot"><img src="shots/s81_dept_stats.png" alt="학과 통계"><div class="cap"><b>s81</b>학과 통계 — 칸반 데이터에서 퍼널·전환율 계산</div></div>
+    <div class="shot"><img src="shots/s10_dashboard.png" alt="대시보드"><div class="cap"><b>s10</b>대시보드 — KPI·프로필 완성도 실측</div></div>
+  </div>
+
+  <div class="footer">
+    <b>기술 메모</b> — 데모는 순수 정적 HTML + <span class="mono">demo-data.js</span>(앱 로직·데이터 브라우저 포팅) + <span class="mono">demo.js</span>(페이지별 하이드레이션)로 구동되며 상태는 <span class="mono">localStorage</span>에 저장됩니다. 실서비스 구현체는 <span class="mono">jobfilter-web</span>(Next.js + Prisma + Supabase)으로 로컬 시연 전용입니다. 저장소 <span class="mono">github.com/zinemun1234/jobfilter-figma-mvp</span> · 배포 커밋 <span class="mono">af6acd8</span>
+  </div>
+</div>
+</body>
+</html>
