@@ -374,56 +374,132 @@
     refreshColCounts();
   }
 
-  /* ===================== s14b 체크리스트 ===================== */
+  /* ===================== s14b 스킬 갭 액션 ===================== */
   if (PAGE === 's14b_checklist') {
-    // 카드 = '보완 체크리스트'를 포함한 컨테이너, 항목 = 내부 label (박스 span + 텍스트 span)
-    qsa('main label[class*="cursor-pointer"], main label').forEach(function () {});
-    // 카드 컨테이너만 바인딩 — 부모 래퍼(div)까지 매칭되면 같은 라벨이 여러 cardId로 중복 저장됨
-    qsa('main div.bg-surface-container-lowest').forEach(function (cardEl) {
-      if (cardEl.dataset.bound) return;
-      var lis = qsa('label', cardEl).filter(function (l) { return l.children.length >= 2 && l.children[0].tagName === 'SPAN'; });
-      if (lis.length < 2) return;
-      var compEl = cardEl.querySelector('.font-label-sm');
-      var roleEl = cardEl.querySelector('p');
-      var cardId = 'chk-' + (compEl ? compEl.textContent.trim() : 'card') + '-' + (roleEl ? roleEl.textContent.trim().slice(0, 10) : '');
-      cardEl.dataset.bound = '1';
-      function paint(li, done) {
-        var box = li.children[0], txt = li.children[1];
-        if (done) {
-          box.className = 'w-4 h-4 mt-0.5 rounded border-2 border-primary bg-primary flex items-center justify-center shrink-0';
-          box.innerHTML = '<span class="material-symbols-outlined text-on-primary text-[12px]">check</span>';
-          if (txt) { txt.classList.add('line-through'); txt.classList.add('text-on-surface-variant'); txt.classList.remove('text-on-surface'); }
-        } else {
-          box.className = 'w-4 h-4 mt-0.5 rounded border-2 border-outline-variant bg-surface-container-lowest flex items-center justify-center shrink-0';
-          box.innerHTML = '';
-          if (txt) { txt.classList.remove('line-through'); txt.classList.remove('text-on-surface-variant'); txt.classList.add('text-on-surface'); }
-        }
+    var board = JF.loadBoard();
+    var boardSection = qs('main section.flex.overflow-x-auto');
+    var GAP_DOT = { preparing: 'bg-outline', applied: 'bg-secondary', screened: 'bg-tertiary', interview: 'bg-primary', offer: 'bg-tertiary', rejected: 'bg-error' };
+    var GAP_BORDER = { preparing: 'border-surface-container-highest', applied: 'border-secondary', screened: 'border-tertiary', interview: 'border-primary', offer: 'border-tertiary', rejected: 'border-error' };
+    var GAP_BADGE = { preparing: 'bg-surface-container-highest', applied: 'bg-secondary-fixed', screened: 'bg-tertiary-fixed', interview: 'bg-primary-fixed', offer: 'bg-tertiary-fixed', rejected: 'bg-error-container' };
+
+    function jobForCard(card) {
+      if (card.jobId) return JF.getJob(card.jobId);
+      var comp = (card.company || '').replace(/\s+/g, '');
+      return JF.JOBS.filter(function (j) {
+        var jc = j.company.replace(/\s+/g, '');
+        return jc === comp || comp.indexOf(jc) >= 0 || jc.indexOf(comp) >= 0;
+      })[0] || null;
+    }
+    function gapChecklist(m) {
+      var items = m.missingRequired.map(function (s) { return '자소서에 ' + s + ' 경험·프로젝트 문장 추가'; })
+        .concat(m.missingPlus.map(function (s) { return s + ' 학습 리소스 확인 (우대 충족)'; }));
+      if (!items.length) items.push('모든 요건 충족 — JD 키워드와 자소서 문장 최종 대조');
+      return items.slice(0, 5);
+    }
+    function paintChk(box, txt, done) {
+      if (done) {
+        box.className = 'w-4 h-4 mt-0.5 rounded border-2 border-primary bg-primary flex items-center justify-center shrink-0';
+        box.innerHTML = '<span class="material-symbols-outlined text-on-primary text-[12px]">check</span>';
+        txt.classList.add('line-through', 'text-on-surface-variant');
+        txt.classList.remove('text-on-surface');
+      } else {
+        box.className = 'w-4 h-4 mt-0.5 rounded border-2 border-outline-variant bg-surface-container-lowest flex items-center justify-center shrink-0';
+        box.innerHTML = '';
+        txt.classList.remove('line-through', 'text-on-surface-variant');
+        txt.classList.add('text-on-surface');
       }
-      function refreshBadge() {
-        var flags = JF.getChecklist(cardId) || [];
-        var done = flags.filter(Boolean).length;
-        qsa('span', cardEl).forEach(function (s) {
-          if (/체크리스트 \d+\/\d+/.test(s.textContent)) s.textContent = '체크리스트 ' + done + '/' + lis.length;
-        });
+    }
+    function cardHtml(card, job) {
+      var h = '<div class="bg-surface-container-lowest rounded-lg p-space-sm shadow-sm border-l-4 ' + GAP_BORDER[card.stage] + ' hover:shadow-md transition-shadow">';
+      h += '<div class="flex items-start justify-between"><div><span class="font-label-sm text-label-sm text-on-surface-variant">' + esc(card.company) + '</span>' +
+        '<p class="font-body-md text-body-md font-semibold text-on-surface leading-snug mt-0.5">' + esc(card.role) + '</p></div>' +
+        '<span class="font-code-sm text-[11px] text-on-surface-variant">매칭 ' + esc(String(job ? JF.matchJob(job).score : (card.match || '-'))) + '</span></div>';
+      h += '<div class="flex items-center justify-between mt-space-xs"><span class="font-code-sm text-[11px] text-secondary font-bold">' + esc(card.dday || '-') + '</span>' +
+        '<span class="font-label-sm text-[10px] text-outline">변경 ' + esc(card.changed || '') + '</span></div>';
+      if (!job) {
+        h += '<div class="mt-space-xs flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-outline">link_off</span><span class="font-label-sm text-[10px] text-on-surface-variant">공고 미연동 — 갭 분석 없음</span></div></div>';
+        return h;
       }
-      var saved = JF.getChecklist(cardId);
-      if (!saved) {
-        var init = lis.map(function (li) { return !!(li.children[0] && li.children[0].querySelector('.material-symbols-outlined')); });
-        var st = JSON.parse(localStorage.getItem('jf-kanban') || '{}');
-        st.checklist = st.checklist || {}; st.checklist[cardId] = init;
-        localStorage.setItem('jf-kanban', JSON.stringify(st));
-        saved = init;
+      var m = JF.matchJob(job);
+      h += '<div class="mt-space-sm pt-space-sm border-t border-surface-container">' +
+        '<div class="flex items-center justify-between mb-space-xs"><span class="font-label-sm text-label-sm font-bold text-on-surface">부족 스킬</span>' +
+        '<span class="font-label-sm text-[10px] text-on-surface-variant">필수 ' + m.missingRequired.length + ' · 우대 ' + m.missingPlus.length + '</span></div>';
+      if (m.missingRequired.length + m.missingPlus.length) {
+        h += '<div class="flex flex-wrap gap-1 mb-space-sm">' +
+          m.missingRequired.map(function (s) { return '<span class="px-2 py-0.5 rounded bg-error-container text-on-error-container font-code-sm text-[11px]">' + esc(s) + ' · 필수</span>'; }).join('') +
+          m.missingPlus.map(function (s) { return '<span class="px-2 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed-variant font-code-sm text-[11px]">' + esc(s) + ' · 우대</span>'; }).join('') +
+          '</div>';
+      } else {
+        h += '<div class="mb-space-sm"><span class="px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant font-code-sm text-[11px]">요건 전부 충족</span></div>';
       }
-      lis.forEach(function (li, i) {
-        var done = !!saved[i];
-        paint(li, done);
+      h += '<span class="font-label-sm text-label-sm font-bold text-on-surface">보완 체크리스트</span><div class="flex flex-col gap-1.5 mt-space-xs" data-chk-host></div>' +
+        '<div class="mt-space-sm flex items-center gap-space-xs"><div class="flex-1 bg-surface-container h-1.5 rounded-full"><div class="bg-tertiary h-full rounded-full transition-all" data-chk-bar style="width:0%"></div></div>' +
+        '<span class="font-code-sm text-[11px] text-on-surface-variant" data-chk-cnt>0/0</span></div></div></div>';
+      return h;
+    }
+    function wireChecklist(cardEl, card, items) {
+      var host = qs('[data-chk-host]', cardEl);
+      var bar = qs('[data-chk-bar]', cardEl), cnt = qs('[data-chk-cnt]', cardEl);
+      if (!host) return;
+      items.forEach(function (text, i) {
+        var li = document.createElement('label');
+        li.className = 'flex items-start gap-space-sm cursor-pointer group';
+        li.innerHTML = '<span class="w-4 h-4 mt-0.5 rounded border-2 border-outline-variant bg-surface-container-lowest flex items-center justify-center shrink-0"></span>' +
+          '<span class="font-body-sm text-body-sm text-on-surface">' + esc(text) + '</span>';
+        host.appendChild(li);
         li.addEventListener('click', function (e) {
           e.preventDefault();
-          paint(li, JF.toggleChecklist(cardId, i));
-          refreshBadge();
+          paintChk(li.children[0], li.children[1], JF.toggleChecklist(card.id, i));
+          refresh();
         });
       });
-      refreshBadge();
+      function refresh() {
+        var flags = JF.getChecklist(card.id) || [];
+        var done = flags.filter(Boolean).length;
+        if (bar) bar.style.width = Math.round(done / items.length * 100) + '%';
+        if (cnt) cnt.textContent = done + '/' + items.length;
+      }
+      items.forEach(function (t, i) {
+        var flags = JF.getChecklist(card.id) || [];
+        var li = host.children[i];
+        paintChk(li.children[0], li.children[1], !!flags[i]);
+      });
+      refresh();
+    }
+    if (boardSection) {
+      var stages = JF.STAGE_ORDER.concat(['rejected']);
+      boardSection.innerHTML = stages.map(function (stg, ci) {
+        var cards = board.filter(function (c) { return c.stage === stg; });
+        var badgeCls = GAP_BADGE[stg] + (stg === 'rejected' ? ' text-on-error-container' : '');
+        var col = '<div class="' + (ci === 0 ? 'w-80' : 'w-64') + ' shrink-0 flex flex-col gap-space-sm">' +
+          '<div class="flex items-center justify-between px-1"><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full ' + GAP_DOT[stg] + '"></span>' +
+          '<span class="font-label-md text-label-md font-bold text-on-surface">' + esc(JF.STAGE_LABEL[stg]) + '</span>' +
+          '<span class="px-1.5 py-0.5 rounded-full ' + badgeCls + ' text-on-surface-variant font-label-sm text-[11px] font-bold">' + cards.length + '</span></div></div>' +
+          '<div class="flex flex-col gap-space-sm p-space-sm rounded-xl bg-surface-container-low min-h-[400px]">';
+        cards.forEach(function (card) {
+          var job = jobForCard(card);
+          col += cardHtml(card, job);
+        });
+        return col + '</div></div>';
+      }).join('');
+      // 체크리스트 와이어링 — 카드 순서대로 재탐색
+      var cols = qsa('div.flex.flex-col.gap-space-sm.rounded-xl, div.flex.flex-col.gap-space-sm.p-space-sm', boardSection);
+      var idx = 0;
+      stages.forEach(function (stg) {
+        board.filter(function (c) { return c.stage === stg; }).forEach(function (card) {
+          var job = jobForCard(card);
+          if (!job) { idx++; return; }
+          var cardEl = qsa('div.bg-surface-container-lowest', boardSection)[idx];
+          wireChecklist(cardEl, card, gapChecklist(JF.matchJob(job)));
+          idx++;
+        });
+      });
+    }
+    // 상단 버튼 → 공고 목록으로 연결
+    qsa('main section button').forEach(function (b) {
+      if (/지원 내역 추가/.test(b.textContent)) {
+        b.addEventListener('click', function () { location.href = './s11_listings.html'; });
+      }
     });
   }
 
