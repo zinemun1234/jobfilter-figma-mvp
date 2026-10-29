@@ -339,9 +339,7 @@ var JF_ICONS = {
       label: '관리자',
       items: [
         { path: 'admin-review', icon: 'fact_check', text: '공고 승인' },
-        { path: 'admin-upload', icon: 'upload_file', text: '일괄 등록' },
-        { path: 'admin-dict', icon: 'spellcheck', text: '키워드 사전' },
-        { path: 'admin-stats', icon: 'analytics', text: '학과 통계' }
+        { path: 'admin-upload', icon: 'upload_file', text: '일괄 등록' }
       ]
     }
   ];
