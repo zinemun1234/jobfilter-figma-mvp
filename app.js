@@ -369,6 +369,37 @@ var JF_ICONS = {
     navEl.innerHTML = html;
   }
 
+  // 모바일 대응 (960px 이하) — 사이드바 숨기고 상단 가로 스크롤 네비로 대체
+  var mstyle = document.createElement('style');
+  mstyle.textContent =
+    '@media (max-width:960px){' +
+    'aside{display:none!important}' +
+    '.pl-64{padding-left:0!important}' +
+    'header{left:0!important;padding-left:12px!important;padding-right:12px!important}' +
+    'main{padding-top:7.2rem!important}' +
+    '.jf-mobilenav{display:flex!important}' +
+    '}' +
+    '.jf-mobilenav{display:none;position:fixed;top:64px;left:0;right:0;z-index:30;' +
+    'background:rgba(249,249,255,.92);backdrop-filter:blur(12px);' +
+    'padding:8px 12px;gap:6px;overflow-x:auto;white-space:nowrap;' +
+    'box-shadow:0 1px 8px rgba(0,0,0,.05);-webkit-overflow-scrolling:touch}' +
+    '.jf-mobilenav a{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;' +
+    'border-radius:8px;font-size:13px;color:#424750;text-decoration:none;flex:none;cursor:pointer}' +
+    '.jf-mobilenav a.on{background:#d5e3ff;color:#001b3f;font-weight:600}' +
+    '.jf-mobilenav a .material-symbols-outlined{font-size:18px}';
+  document.head.appendChild(mstyle);
+  var mnav = document.createElement('div');
+  mnav.className = 'jf-mobilenav';
+  var mhtml = '';
+  NAV_GROUPS.forEach(function (g) {
+    g.items.forEach(function (it) {
+      mhtml += '<a data-path="' + it.path + '"' + (it.path === activePath ? ' class="on"' : '') + ' href="#">' +
+        '<span class="material-symbols-outlined">' + it.icon + '</span><span>' + it.text + '</span></a>';
+    });
+  });
+  mnav.innerHTML = mhtml;
+  document.body.appendChild(mnav);
+
   qsa('[data-path]').forEach(function (a) {
     a.style.cursor = 'pointer';
     a.addEventListener('click', function (e) {
