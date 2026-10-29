@@ -378,7 +378,8 @@
   if (PAGE === 's14b_checklist') {
     // 카드 = '보완 체크리스트'를 포함한 컨테이너, 항목 = 내부 label (박스 span + 텍스트 span)
     qsa('main label[class*="cursor-pointer"], main label').forEach(function () {});
-    qsa('main div').forEach(function (cardEl) {
+    // 카드 컨테이너만 바인딩 — 부모 래퍼(div)까지 매칭되면 같은 라벨이 여러 cardId로 중복 저장됨
+    qsa('main div.bg-surface-container-lowest').forEach(function (cardEl) {
       if (cardEl.dataset.bound) return;
       var lis = qsa('label', cardEl).filter(function (l) { return l.children.length >= 2 && l.children[0].tagName === 'SPAN'; });
       if (lis.length < 2) return;
