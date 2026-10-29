@@ -339,7 +339,9 @@ var JF_ICONS = {
       label: '관리자',
       items: [
         { path: 'admin-review', icon: 'fact_check', text: '공고 승인' },
-        { path: 'admin-upload', icon: 'upload_file', text: '일괄 등록' }
+        { path: 'admin-upload', icon: 'upload_file', text: '일괄 등록' },
+        { path: 'admin-dict', icon: 'spellcheck', text: '키워드 사전' },
+        { path: 'admin-stats', icon: 'analytics', text: '학과 통계' }
       ]
     }
   ];
@@ -800,7 +802,7 @@ var JF_ICONS = {
           toast('공고가 반려되었습니다');
         });
       }
-      if (b.textContent.indexOf('분류 키워드') > -1) b.addEventListener('click', function () { toast('분류 규칙 조정', '자동 분류 규칙 편집은 다음 단계에서 제공됩니다.'); });
+      if (b.textContent.indexOf('분류 키워드') > -1) b.addEventListener('click', function () { toast('키워드 사전 조정', '자동 분류 규칙을 수정합니다 (F-43 연계).'); });
     });
   }
 
