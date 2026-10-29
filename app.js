@@ -324,7 +324,6 @@ var JF_ICONS = {
         { path: 'applications', icon: 'assignment_turned_in', text: '지원 관리' },
         { path: 'resume-coaching', icon: 'edit_note', text: '자소서 코칭' },
         { path: 'bookmarks', icon: 'bookmark_border', text: '북마크' },
-        { path: 'calendar', icon: 'calendar_today', text: '캘린더' },
         { path: 'profile', icon: 'person_outline', text: '프로필' }
       ]
     },

@@ -96,6 +96,27 @@
       card.style.cursor = 'pointer';
       card.addEventListener('click', function () { location.href = 's12_detail.html?job=' + job.id; });
     });
+    // 정렬 토글 — 최신순 ↔ 매칭 점수순
+    var sortBtn = qsa('main button').filter(function (b) { return /최신순|매칭순/.test(b.textContent); })[0];
+    if (sortBtn && grid) {
+      var byScore = false, origOrder = null;
+      sortBtn.addEventListener('click', function () {
+        byScore = !byScore;
+        var cards = qsa(':scope > div', grid);
+        if (!origOrder) origOrder = cards.slice();
+        if (byScore) {
+          cards.sort(function (a, b) {
+            var jA = JF.JOBS.filter(function (j) { return j.id === a.dataset.jobId; })[0];
+            var jB = JF.JOBS.filter(function (j) { return j.id === b.dataset.jobId; })[0];
+            return (jB ? JF.matchJob(jB).score : 0) - (jA ? JF.matchJob(jA).score : 0);
+          });
+        } else {
+          cards = origOrder.slice();
+        }
+        cards.forEach(function (c) { grid.appendChild(c); });
+        sortBtn.childNodes[0].textContent = byScore ? '매칭순' : '최신순';
+      });
+    }
   }
 
   /* ===================== s12 공고 상세 ===================== */
@@ -348,14 +369,17 @@
       return { el: col, stage: STAGE_OF_COL[label], body: qs('div[class*="min-h-["]', col) };
     }).filter(function (c) { return c.stage && c.body; });
 
+    var claimed = {};
     function identifyCard(el) {
       var company = (qs('.font-label-sm', el) || {}).textContent || '';
       var role = (qs('p', el) || {}).textContent || '';
-      var all = JF.loadBoard();
-      return all.filter(function (c) {
+      var all = JF.loadBoard().filter(function (c) { return !claimed[c.id]; });
+      var m = all.filter(function (c) {
         return c.company === company.trim() && role.trim().indexOf(c.role.replace(/\s*\(.*\)$/, '').trim()) > -1 ||
                (company.trim() === c.company && el.textContent.indexOf(c.role) > -1);
       })[0] || all.filter(function (c) { return c.company === company.trim() && c.role === role.trim(); })[0] || null;
+      if (m) claimed[m.id] = true;
+      return m;
     }
     function colFor(stage) { return cols.filter(function (c) { return c.stage === stage; })[0]; }
     function refreshColCounts() {
@@ -365,8 +389,24 @@
       });
       var h1 = qs('main h1');
       if (h1 && /총 \d+개/.test(h1.textContent)) h1.textContent = h1.textContent.replace(/총 \d+개/, '총 ' + JF.loadBoard().length + '개');
-      // 상단 요약 배지(있으면) 동기화
+      // 상단 KPI 카드 동기화
       var counts = JF.stageCounts(JF.loadBoard());
+      var kpiMap = {
+        '총 지원': JF.loadBoard().length,
+        '진행 중': counts.preparing + counts.applied + counts.screened + counts.interview,
+        '서류 합격': counts.screened,
+        '면접 예정': counts.interview,
+        '최종 합격': counts.offer,
+        '불합격': counts.rejected
+      };
+      qsa('main .bg-surface-container-lowest.rounded-xl').forEach(function (kpi) {
+        var lab = (qs('.font-label-sm', kpi) || {}).textContent || '';
+        var val = qs('.font-display-lg', kpi);
+        if (val && kpiMap[lab.trim()] !== undefined) {
+          val.innerHTML = kpiMap[lab.trim()] + '<span class="font-body-sm text-body-sm text-on-surface-variant">건</span>';
+        }
+      });
+      // 상단 요약 배지(있으면) 동기화
       qsa('main span, main p').forEach(function (el) {
         var t = el.textContent.trim();
         if (t === '서류 합격률 46.2%' || /서류 합격률 \d+(\.\d+)?%/.test(t)) {
@@ -382,6 +422,7 @@
     }
 
     // 저장된 단계 위치 복원
+    claimed = {};
     cols.forEach(function (c) {
       qsa('[class*="cursor-grab"]', c.body).forEach(function (cardEl) {
         var card = identifyCard(cardEl);
@@ -444,6 +485,7 @@
       });
     }
     function persistPositions() {
+      claimed = {};
       cols.forEach(function (c) {
         qsa('[class*="cursor-grab"]', c.body).forEach(function (cardEl) {
           var card = identifyCard(cardEl);
@@ -460,6 +502,7 @@
       refreshColCounts();
     }
 
+    claimed = {};
     qsa('[class*="cursor-grab"]').forEach(function (cardEl) {
       var card = identifyCard(cardEl);
       if (card) cardEl.dataset.cardId = card.id;
@@ -668,6 +711,10 @@
       var firstCard = qs('main section');
       if (firstCard && firstCard.parentElement) firstCard.parentElement.insertBefore(banner, firstCard);
     }
+    // PDF 다운로드 — 브라우저 인쇄(PDF 저장)
+    qsa('main button').forEach(function (b) {
+      if (/PDF 다운로드/.test(b.textContent)) b.addEventListener('click', function () { window.print(); });
+    });
   }
 
   /* ===================== s17 히트맵 ===================== */
@@ -871,7 +918,7 @@
           '<td class="py-3 px-3"><span class="font-code-sm text-[13px] font-bold ' + scls(a.score) + '">' + a.score + '</span></td>' +
           '<td class="py-3 px-3 font-code-sm text-[12px] text-on-surface-variant">' + date + '</td>' +
           '<td class="py-3 px-3"><span class="px-2 py-0.5 rounded-full ' + stcls[st] + ' font-label-sm text-[11px] font-bold">' + st + '</span></td>' +
-          '<td class="py-3 px-3"><button class="px-3 py-1 rounded-lg bg-surface-container text-on-surface font-label-sm text-label-sm">자소서 보기</button></td></tr>';
+          '<td class="py-3 px-3"><button class="cv-btn px-3 py-1 rounded-lg bg-surface-container text-on-surface font-label-sm text-label-sm" data-name="' + esc(a.name) + '">자소서 보기</button></td></tr>';
       }).join('');
       if (infoEl) infoEl.textContent = ((page - 1) * PER + 1) + '~' + Math.min(page * PER, apps.length) + ' / ' + apps.length + '명';
       pageBtns.forEach(function (b) {
@@ -894,6 +941,21 @@
     });
     pageBtns.forEach(function (b) {
       b.addEventListener('click', function () { page = parseInt(b.textContent.trim(), 10) || 1; render(); });
+    });
+    // 자소서 보기 → 분석 화면, 엑셀 내보내기 → CSV 다운로드
+    if (tbody33) tbody33.addEventListener('click', function (e) {
+      if (e.target.closest('.cv-btn')) location.href = 's16_analysis.html';
+    });
+    qsa('main button').forEach(function (b) {
+      if (/엑셀보내기/.test(b.textContent)) b.addEventListener('click', function () {
+        var csv = '﻿지원자,학년,매칭점수,전형상태\n' + apps.map(function (a) {
+          return a.name + ',컴퓨터공학과 ' + a.year + '학년,' + a.score + ',' + statusOf(a.score);
+        }).join('\n');
+        var a2 = document.createElement('a');
+        a2.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+        a2.download = 'jobfilter_applicants.csv'; a2.click();
+        say('엑셀(CSV) 내보내기 완료', apps.length + '명의 지원자 데이터를 내려받았습니다.');
+      });
     });
     render();
   }
@@ -1009,6 +1071,19 @@
         if (/상태 전이 0건/.test(el.textContent)) el.textContent = el.textContent.replace('상태 전이 0건', '상태 전이 ' + hist.length + '건');
       });
     }
+    // 엑셀 내보내기 — 퍼널 실측 CSV
+    qsa('main button').forEach(function (b) {
+      if (/엑셀 내보내기/.test(b.textContent)) b.addEventListener('click', function () {
+        var bd = JF.loadBoard(), st = JF.stageCounts(bd);
+        var csv = '﻿단계,건수\n서류 준비,' + st.preparing + '\n지원 완료,' + st.applied +
+          '\n서류 합격,' + st.screened + '\n면접 예정,' + st.interview +
+          '\n최종 합격,' + st.offer + '\n불합격,' + st.rejected;
+        var a2 = document.createElement('a');
+        a2.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+        a2.download = 'jobfilter_funnel.csv'; a2.click();
+        say('엑셀(CSV) 내보내기 완료', '지원 퍼널 실측 ' + bd.length + '건을 내려받았습니다.');
+      });
+    });
   }
 
   /* ===================== s10 대시보드 ===================== */
