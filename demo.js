@@ -139,6 +139,12 @@
           el.innerHTML = el.innerHTML.replace(/\d+% 이상 일치/, '<b>' + match.score + '% 일치</b>');
         }
       });
+      // 상단 "김민준 학생 매칭 N%" 배지 — 정적 잔재를 실측으로
+      qsa('main span, main p, main div').forEach(function (el) {
+        if (el.children.length === 0 && /매칭 \d+%/.test(el.textContent)) {
+          el.textContent = el.textContent.replace(/매칭 \d+%/, '매칭 ' + match.score + '%');
+        }
+      });
       // 필수/우대 스킬 칩 갱신
       var chipHosts = qsa('main .flex.flex-wrap');
       chipHosts.forEach(function (host) {
