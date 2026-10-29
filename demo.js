@@ -421,10 +421,17 @@
         return h;
       }
       var m = JF.matchJob(job);
-      h += '<div class="mt-space-sm pt-space-sm border-t border-surface-container">' +
+      var nGap = m.missingRequired.length + m.missingPlus.length;
+      // 컴팩트 배지 — 클릭하면 갭 섹션 펼침
+      h += '<div class="mt-space-xs flex items-center justify-between cursor-pointer" data-gap-toggle>' +
+        '<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] ' + (nGap ? 'text-secondary' : 'text-tertiary') + '">task_alt</span>' +
+        '<span class="font-label-sm text-[10px] text-on-surface-variant">스킬 갭 <span data-chk-badge>0/0</span>' + (nGap ? ' · 부족 ' + nGap + '개' : ' · 충족') + '</span></span>' +
+        '<span class="material-symbols-outlined text-[16px] text-outline transition-transform" data-gap-arrow>expand_more</span></div>';
+      // 갭 섹션 — 기본 접힘
+      h += '<div class="mt-space-sm pt-space-sm border-t border-surface-container" data-gap-sec style="display:none">' +
         '<div class="flex items-center justify-between mb-space-xs"><span class="font-label-sm text-label-sm font-bold text-on-surface">부족 스킬</span>' +
         '<span class="font-label-sm text-[10px] text-on-surface-variant">필수 ' + m.missingRequired.length + ' · 우대 ' + m.missingPlus.length + '</span></div>';
-      if (m.missingRequired.length + m.missingPlus.length) {
+      if (nGap) {
         h += '<div class="flex flex-wrap gap-1 mb-space-sm">' +
           m.missingRequired.map(function (s) { return '<span class="px-2 py-0.5 rounded bg-error-container text-on-error-container font-code-sm text-[11px]">' + esc(s) + ' · 필수</span>'; }).join('') +
           m.missingPlus.map(function (s) { return '<span class="px-2 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed-variant font-code-sm text-[11px]">' + esc(s) + ' · 우대</span>'; }).join('') +
@@ -439,8 +446,19 @@
     }
     function wireChecklist(cardEl, card, items) {
       var host = qs('[data-chk-host]', cardEl);
-      var bar = qs('[data-chk-bar]', cardEl), cnt = qs('[data-chk-cnt]', cardEl);
+      var bar = qs('[data-chk-bar]', cardEl), cnt = qs('[data-chk-cnt]', cardEl), badge = qs('[data-chk-badge]', cardEl);
+      var gapSec = qs('[data-gap-sec]', cardEl), arrow = qs('[data-gap-arrow]', cardEl);
       if (!host) return;
+      // 카드 클릭 → 갭 섹션 토글 (체크리스트 클릭은 제외)
+      if (gapSec) {
+        cardEl.style.cursor = 'pointer';
+        cardEl.addEventListener('click', function (e) {
+          if (e.target.closest('label') || e.target.closest('[data-gap-sec]')) return;
+          var open = gapSec.style.display !== 'none';
+          gapSec.style.display = open ? 'none' : '';
+          if (arrow) arrow.style.transform = open ? '' : 'rotate(180deg)';
+        });
+      }
       items.forEach(function (text, i) {
         var li = document.createElement('label');
         li.className = 'flex items-start gap-space-sm cursor-pointer group';
@@ -458,6 +476,7 @@
         var done = flags.filter(Boolean).length;
         if (bar) bar.style.width = Math.round(done / items.length * 100) + '%';
         if (cnt) cnt.textContent = done + '/' + items.length;
+        if (badge) badge.textContent = done + '/' + items.length;
       }
       items.forEach(function (t, i) {
         var flags = JF.getChecklist(card.id) || [];
