@@ -213,8 +213,8 @@
           '<button class="go-detail px-3 py-1.5 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm">상세 보기</button></div></div></div>';
       }).join('') : '<div class="col-span-full text-center py-space-xl text-on-surface-variant">북마크한 공고가 없습니다 — 공고 목록에서 북마크를 눌러 보세요.</div>';
       // 카운트 배지
-      qsa('main span, main p').forEach(function (el) {
-        if (/^\d+건$/.test(el.textContent.trim())) el.textContent = ids.length + '건';
+      qsa('main span, main p, main strong').forEach(function (el) {
+        if (/^\d+건$/.test(el.textContent.trim()) && el.children.length === 0) el.textContent = ids.length + '건';
       });
       parent.querySelectorAll('.bm-off').forEach(function (b) {
         b.addEventListener('click', function () {
@@ -254,6 +254,8 @@
         var n = c.body.querySelectorAll('[class*="cursor-grab"]').length;
         qsa('.rounded-full', c.el).forEach(function (sp) { if (/^\d+$/.test(sp.textContent.trim())) sp.textContent = n; });
       });
+      var h1 = qs('main h1');
+      if (h1 && /총 \d+개/.test(h1.textContent)) h1.textContent = h1.textContent.replace(/총 \d+개/, '총 ' + JF.loadBoard().length + '개');
       // 상단 요약 배지(있으면) 동기화
       var counts = JF.stageCounts(JF.loadBoard());
       qsa('main span, main p').forEach(function (el) {
@@ -728,12 +730,20 @@
       [/준비\/불합격|준비·불합격/, idleN + '건', '—']
     ];
     qsa('main div').forEach(function (row) {
+      // 실제 퍼널 행만 매칭 — w-24 라벨 + w-16 퍼센트 구조 (상위 래퍼 오매칭 방지)
+      var labelEl = row.querySelector(':scope > .w-24');
+      var pctEl = row.querySelector(':scope > .w-16');
+      if (!labelEl || !pctEl) return;
       funnel.forEach(function (f) {
-        if (row.children.length >= 2 && row.children.length <= 5 && f[0].test(row.textContent) && /\d+건/.test(row.textContent)) {
-          qsa('span, p, div', row).forEach(function (el) {
+        if (f[0].test(labelEl.textContent.trim())) {
+          qsa('.font-bold', row).forEach(function (el) {
             if (/^\d+건$/.test(el.textContent.trim())) el.textContent = f[1];
-            else if (/^\d+(\.\d+)?%$/.test(el.textContent.trim()) && f[2] !== '—') el.textContent = f[2];
           });
+          if (f[2] !== '—' && /^\d+(\.\d+)?%$/.test(pctEl.textContent.trim())) {
+            pctEl.textContent = f[2];
+            var bar = row.querySelector('.h-full[style*="width"]');
+            if (bar) bar.style.width = f[2];
+          }
         }
       });
     });
