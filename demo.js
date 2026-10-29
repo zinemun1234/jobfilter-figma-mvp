@@ -1798,8 +1798,13 @@
         document.head.appendChild(s);
       } else {
         var rd = new FileReader();
-        rd.onload = function () { handleRows(parseCSVText(String(rd.result || '')), f.name); };
-        rd.readAsText(f, 'utf-8');
+        rd.onload = function () {
+          var buf = rd.result, text;
+          try { text = new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+          catch (e) { text = new TextDecoder('euc-kr').decode(buf); }
+          handleRows(parseCSVText(String(text || '')), f.name);
+        };
+        rd.readAsArrayBuffer(f);
       }
     });
     function parseXlsx(f) {
