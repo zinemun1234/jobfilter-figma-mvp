@@ -473,48 +473,8 @@ window.JF = (function () {
   }
   function getChecklist(cardId) { return readStore().checklist[cardId] || null; }
 
-  /* ─── 학과 코호트 (lib/cohort.ts 동기화 — 지원자 목록·통계 실측 기반) ─── */
-  var COHORT = [
-    { id: 'S01', name: '김민준', year: 4, skills: ['Java', 'Spring Boot', 'MySQL', 'Docker', 'Git', 'Linux'] },
-    { id: 'S02', name: '이서연', year: 4, skills: ['React', 'TypeScript', 'Next.js', 'Git', 'Tailwind'] },
-    { id: 'S03', name: '박준혁', year: 4, skills: ['Java', 'Spring Boot', 'Kubernetes', 'AWS', 'Redis', 'MySQL'] },
-    { id: 'S04', name: '최지우', year: 4, skills: ['C++', 'Linux', 'Go', '분산 시스템', 'Raft'] },
-    { id: 'S05', name: '정우진', year: 4, skills: ['Python', 'SQL', 'Spark', 'Airflow', 'Linux', 'Git'] },
-    { id: 'S06', name: '한소율', year: 4, skills: ['Swift', 'UIKit', 'Git', 'iOS'] },
-    { id: 'S07', name: '오태양', year: 3, skills: ['Java', 'Spring Boot', 'MySQL', 'Git'] },
-    { id: 'S08', name: '서연우', year: 3, skills: ['React', 'JavaScript', 'TypeScript', 'Git'] },
-    { id: 'S09', name: '임도현', year: 3, skills: ['Docker', 'Kubernetes', 'Linux', 'Go', 'AWS'] },
-    { id: 'S10', name: '강민서', year: 3, skills: ['Python', 'Pandas', 'SQL', 'Git'] },
-    { id: 'S11', name: '윤채원', year: 3, skills: ['C++', 'Linux', 'Git'] },
-    { id: 'S12', name: '신예린', year: 3, skills: ['Node.js', 'React', 'GraphQL', 'AWS', 'Docker'] },
-    { id: 'S13', name: '장준호', year: 4, skills: ['Java', 'Spring Boot', 'MySQL', 'Redis', 'Kubernetes', 'AWS', 'Docker'] },
-    { id: 'S14', name: '배수아', year: 4, skills: ['React', 'TypeScript', 'GraphQL', 'Node.js', 'Jest'] },
-    { id: 'S15', name: '송지민', year: 3, skills: ['Kotlin', 'Spring Boot', 'MySQL', 'Git'] },
-    { id: 'S16', name: '권태희', year: 3, skills: ['Go', 'Docker', 'Kubernetes', 'Linux', 'Terraform'] },
-    { id: 'S17', name: '문성민', year: 4, skills: ['C++', 'Go', 'Linux', 'Redis', 'Kubernetes', '분산 시스템'] },
-    { id: 'S18', name: '하은재', year: 2, skills: ['Python', 'C', 'Git'] },
-    { id: 'S19', name: '노유빈', year: 2, skills: ['Java', 'Git', 'MySQL'] },
-    { id: 'S20', name: '류현우', year: 3, skills: ['Rust', 'Linux', 'Git', 'Docker'] },
-    { id: 'S21', name: '표지훈', year: 4, skills: ['Java', 'Spring Boot', 'AWS', 'Docker', 'MySQL', 'Kubernetes', 'Redis'] },
-    { id: 'S22', name: '이승우', year: 3, skills: ['TypeScript', 'React', 'Next.js', 'Node.js', 'AWS'] },
-    { id: 'S23', name: '홍시우', year: 4, skills: ['Python', 'Spark', 'Airflow', 'SQL', 'Docker', 'Linux'] },
-    { id: 'S24', name: '유재민', year: 3, skills: ['C++', 'Linux', '동시성 제어', 'Git'] }
-  ];
-
-  /* s33 지원자 목록 — matchJobWith 점수 내림차순 정렬 (안정 정렬 = 코호트 순서 유지) */
-  function applicantsFor(jobId) {
-    var job = getJob(jobId) || JOBS[0];
-    return COHORT.map(function (s) {
-      var set = {};
-      s.skills.forEach(function (k) { set[surfaceKey(k)] = true; });
-      var m = matchJobWith(set, job);
-      return { id: s.id, name: s.name, year: s.year, score: m.score, matched: m.requiredHit, total: job.skills.length };
-    }).sort(function (a, b) { return b.score - a.score; });
-  }
-
   return {
     DICTIONARY: DICTIONARY, JOBS: JOBS, getJob: getJob,
-    COHORT: COHORT, applicantsFor: applicantsFor,
     getProfileSkills: getProfileSkills, saveProfileSkills: saveProfileSkills,
     matchJob: matchJob, matchJobWith: matchJobWith,
     extractTokens: extractTokens, analyzeText: analyzeText, keywordCoverage: keywordCoverage,
