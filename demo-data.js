@@ -336,6 +336,13 @@ window.JF = (function () {
     record({ cardId: card.id, company: card.company, role: card.role, from: null, to: 'preparing', at: new Date().toISOString() });
     return { card: card, created: true };
   }
+  function setStage(id, stage) {
+    var s = readStore();
+    var card = loadBoard().filter(function (c) { return c.id === id; })[0];
+    if (!card || card.stage === stage) return;
+    s.stages[id] = stage; writeStore(s);
+    record({ cardId: id, company: card.company, role: card.role, from: card.stage, to: stage, at: new Date().toISOString() });
+  }
 
   /* ─── 북마크 (lib/bookmarks.ts 동기화) ─── */
   var BOOKMARKS_KEY = 'jf-bookmarks';
@@ -519,7 +526,7 @@ window.JF = (function () {
     matchJob: matchJob, matchJobWith: matchJobWith,
     extractTokens: extractTokens, analyzeText: analyzeText, keywordCoverage: keywordCoverage,
     STAGE_ORDER: STAGE_ORDER, STAGE_LABEL: STAGE_LABEL, SEED_CARDS: SEED_CARDS,
-    loadBoard: loadBoard, stageCounts: stageCounts, moveCard: moveCard, addFromJob: addFromJob,
+    loadBoard: loadBoard, stageCounts: stageCounts, moveCard: moveCard, addFromJob: addFromJob, setStage: setStage,
     readHistory: readHistory,
     readBookmarkIds: readBookmarkIds, toggleBookmark: toggleBookmark,
     RESUME_FULL: RESUME_FULL, JD_KEYWORDS: JD_KEYWORDS, REQUIRED: REQUIRED,

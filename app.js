@@ -423,6 +423,88 @@ var JF_ICONS = {
     });
   }
 
+  // 알림 벨 — 실제 데이터 기반 알림 패널 (마감 임박·면접 예정·최근 전이)
+  var bell = qs('header button[aria-label="알림"]');
+  if (bell && window.JF) {
+    function buildNotifs() {
+      var list = [];
+      JF.JOBS.forEach(function (j) {
+        if (j.urgent) list.push({ icon: 'schedule', color: '#ba1a1a', bg: '#ffdad6',
+          text: j.company + ' ' + j.title, sub: '마감 ' + j.dday + ' — 지원 마감이 임박했습니다',
+          href: 's12_detail.html?job=' + j.id });
+      });
+      JF.loadBoard().forEach(function (c) {
+        if (c.stage === 'interview') list.push({ icon: 'event', color: '#004124', bg: '#a4f4bf',
+          text: c.company + ' ' + c.role, sub: '면접 예정 — 일정을 확인하세요', href: 's14_kanban.html' });
+      });
+      JF.readHistory().slice(0, 2).forEach(function (h) {
+        var lab = JF.STAGE_LABEL || {};
+        list.push({ icon: 'swap_horiz', color: '#00386f', bg: '#d5e3ff',
+          text: h.company + ' ' + h.role,
+          sub: (h.from ? (lab[h.from] || h.from) : '신규 추가') + ' → ' + (lab[h.to] || h.to),
+          href: 's14_kanban.html' });
+      });
+      return list;
+    }
+    var badge = qs('.bg-error', bell);
+    function syncBadge() { var n = buildNotifs().length; if (badge) badge.textContent = n; }
+    syncBadge();
+    var npanel = null;
+    bell.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (npanel) { npanel.remove(); npanel = null; return; }
+      var items = buildNotifs();
+      npanel = document.createElement('div');
+      npanel.style.cssText = 'position:fixed;top:64px;right:24px;width:320px;z-index:60;' +
+        'background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.14);overflow:hidden;font-family:inherit';
+      var html = '<div style="padding:14px 16px 10px;border-bottom:1px solid #e7eeff;display:flex;justify-content:space-between;align-items:center">' +
+        '<span style="font-weight:700;font-size:14px;color:#111c2d">알림</span>' +
+        '<span style="font-size:11px;color:#424750">' + items.length + '건</span></div>';
+      if (!items.length) html += '<div style="padding:24px;text-align:center;font-size:13px;color:#737781">새 알림이 없습니다</div>';
+      items.forEach(function (n) {
+        html += '<a href="' + n.href + '" style="display:flex;gap:10px;padding:11px 16px;text-decoration:none;align-items:flex-start" ' +
+          'onmouseover="this.style.background=\'#f0f3ff\'" onmouseout="this.style.background=\'\'">' +
+          '<span class="material-symbols-outlined" style="font-size:18px;color:' + n.color + ';background:' + n.bg +
+          ';border-radius:50%;padding:6px;flex:none">' + n.icon + '</span>' +
+          '<span style="min-width:0"><span style="display:block;font-size:13px;font-weight:600;color:#111c2d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + n.text + '</span>' +
+          '<span style="display:block;font-size:12px;color:#424750;margin-top:2px">' + n.sub + '</span></span></a>';
+      });
+      npanel.innerHTML = html;
+      document.body.appendChild(npanel);
+      npanel.addEventListener('click', function (ev) { ev.stopPropagation(); });
+    });
+    document.addEventListener('click', function () { if (npanel) { npanel.remove(); npanel = null; } });
+  }
+
+  // 아바타 드롭다운 → 프로필 메뉴
+  var avatarWrap = qs('header .flex.items-center.gap-space-sm.pl-space-sm') ||
+    qs('header div[title]') && qs('header div[title]').parentElement;
+  if (avatarWrap) {
+    avatarWrap.style.cursor = 'pointer';
+    avatarWrap.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var ex = qs('.jf-avatar-menu');
+      if (ex) { ex.remove(); return; }
+      var m = document.createElement('div');
+      m.className = 'jf-avatar-menu';
+      m.style.cssText = 'position:fixed;top:64px;right:24px;width:200px;z-index:60;background:#fff;' +
+        'border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.14);overflow:hidden';
+      m.innerHTML =
+        '<div style="padding:12px 16px;border-bottom:1px solid #e7eeff">' +
+        '<div style="font-weight:700;font-size:14px;color:#111c2d">김민준</div>' +
+        '<div style="font-size:12px;color:#424750">컴퓨터공학과 4학년</div></div>' +
+        '<a href="s27_profile.html" style="display:flex;gap:10px;padding:10px 16px;font-size:13px;color:#111c2d;text-decoration:none" ' +
+        'onmouseover="this.style.background=\'#f0f3ff\'" onmouseout="this.style.background=\'\'">' +
+        '<span class="material-symbols-outlined" style="font-size:18px">person_outline</span>프로필 관리</a>' +
+        '<a href="s16_analysis.html" style="display:flex;gap:10px;padding:10px 16px;font-size:13px;color:#111c2d;text-decoration:none" ' +
+        'onmouseover="this.style.background=\'#f0f3ff\'" onmouseout="this.style.background=\'\'">' +
+        '<span class="material-symbols-outlined" style="font-size:18px">analytics</span>자소서 분석</a>';
+      document.body.appendChild(m);
+      m.addEventListener('click', function (ev) { ev.stopPropagation(); });
+      document.addEventListener('click', function () { var x = qs('.jf-avatar-menu'); if (x) x.remove(); }, { once: true });
+    });
+  }
+
   /* ---------- 2) 페이지별 로직 ---------- */
 
   /* ===== F-10 대시보드 ===== */
@@ -482,9 +564,9 @@ var JF_ICONS = {
       });
     }
 
-    // 필터 칩 토글
+    // 학과 칩 — 컴공 포털이라 고정 의미 (실제 필터 칩은 demo.js에서 처리)
     qsa('section button').forEach(function (b) {
-      if (['경력', '고용형태', '학과', '근무지', '태그', '마감일'].indexOf(b.textContent.trim()) > -1) {
+      if (b.textContent.trim() === '학과') {
         b.addEventListener('click', function () {
           b.classList.toggle('bg-primary-container');
           b.classList.toggle('text-on-primary');
@@ -516,43 +598,6 @@ var JF_ICONS = {
       }
     });
 
-    // 정렬 드롭다운: 최신순 → 마감임박순 → 매칭순 순환
-    var sortBtn = null;
-    qsa('button').forEach(function (b) { if (b.textContent.indexOf('최신순') > -1 || b.textContent.indexOf('순') > -1 && b.textContent.indexOf('expand') > -1) sortBtn = b; });
-    var sortModes = ['최신순', '마감임박순', '매칭순']; var sortIdx = 0;
-    if (sortBtn) {
-      sortBtn.addEventListener('click', function () {
-        sortIdx = (sortIdx + 1) % sortModes.length;
-        sortBtn.childNodes[0].textContent = sortModes[sortIdx];
-        var grid = cards[0] && cards[0].parentElement;
-        if (grid && sortModes[sortIdx] === '매칭순') {
-          Array.prototype.slice.call(grid.children).sort(function (a, b2) {
-            var sa = parseInt((qs('.font-code-sm', a) || {}).textContent) || 0;
-            var sb = parseInt((qs('.font-code-sm', b2) || {}).textContent) || 0;
-            return sb - sa;
-          }).forEach(function (c) { grid.appendChild(c); });
-        }
-        toast(sortModes[sortIdx] + '으로 정렬');
-      });
-    }
-
-    // 북마크 토글
-    cards.forEach(function (c) {
-      var bm = qs('button .material-symbols-outlined', c);
-      if (bm) {
-        var btn = bm.parentElement;
-        btn.addEventListener('click', function () {
-          var on = bm.textContent === 'bookmark';
-          bm.textContent = on ? 'bookmark_border' : 'bookmark';
-          bm.style.fontVariationSettings = on ? "'FILL' 0" : "'FILL' 1";
-          toast(on ? '북마크 해제' : '북마크 저장', '북마크 보관함을 참고하세요.');
-        });
-      }
-      // 상세 보기 → F-12
-      qsa('button', c).forEach(function (b) {
-        if (b.textContent.indexOf('상세 보기') > -1) b.addEventListener('click', function () { location.href = 's12_detail.html'; });
-      });
-    });
   }
 
   /* ===== F-12 공고 상세 ===== */

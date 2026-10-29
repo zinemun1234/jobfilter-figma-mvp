@@ -117,6 +117,133 @@
         sortBtn.childNodes[0].textContent = byScore ? '매칭순' : '최신순';
       });
     }
+
+    // ===== 실제 필터 시스템 — 칩별 드롭다운 + 조합 적용 =====
+    var cities = [], skillOpts = [];
+    JF.JOBS.forEach(function (j) {
+      var c = (j.location || '').split(' ')[0];
+      if (c && cities.indexOf(c) < 0) cities.push(c);
+      (j.skills || []).concat(j.plus || []).forEach(function (s) { if (skillOpts.indexOf(s) < 0) skillOpts.push(s); });
+    });
+    var CHIP_FILTERS = {
+      '경력': { opts: ['신입', '경력'], test: function (j, v) { return (j.type || '').indexOf(v) > -1; } },
+      '고용형태': { opts: ['정규직', '인턴', '체험형'], test: function (j, v) { return (j.type || '').indexOf(v) > -1; } },
+      '근무지': { opts: cities, test: function (j, v) { return (j.location || '').indexOf(v) > -1; } },
+      '태그': { opts: skillOpts, test: function (j, v) { return (j.skills || []).concat(j.plus || []).indexOf(v) > -1; } },
+      '마감일': { opts: { 'D-5 이내': 5, 'D-10 이내': 10, 'D-30 이내': 30 }, test: function (j, v) { return (parseInt((j.dday || '').replace(/\D/g, ''), 10) || 999) <= v; } }
+    };
+    var activeF = {};
+    var sectionInput = qs('section input');
+    function cardJob(c) { return JF.JOBS.filter(function (j) { return j.id === c.dataset.jobId; })[0]; }
+    function passesFilters(job) {
+      return Object.keys(activeF).every(function (k) {
+        if (k === '__match') return JF.matchJob(job).score >= activeF[k];
+        if (k === '__intern') return /인턴|체험형/.test(job.type || '');
+        var def = CHIP_FILTERS[k];
+        return def ? def.test(job, activeF[k]) : true;
+      });
+    }
+    function applyAll() {
+      var term = ((sectionInput && sectionInput.value) || '').trim().toLowerCase();
+      var hasF = Object.keys(activeF).length > 0;
+      var shown = 0;
+      qsa('.grid > div').forEach(function (c) {
+        var job = cardJob(c);
+        var ok = (!job)
+          ? (!term && !hasF)
+          : ((!term || c.textContent.toLowerCase().indexOf(term) > -1) && passesFilters(job));
+        c.style.display = ok ? '' : 'none';
+        if (ok) shown++;
+      });
+      // 카운트 배지 동기화
+      qsa('main strong, main span, main p').forEach(function (el) {
+        var t = el.textContent.trim();
+        if (/^\d+건$/.test(t) && el.children.length === 0) el.textContent = shown + '건';
+      });
+    }
+    // 검색 입력도 조합 필터에 통합 (app.js 검색과 함께 동작)
+    if (sectionInput) sectionInput.addEventListener('input', applyAll);
+    // 칩 드롭다운
+    var fpop = null;
+    function closePop() { if (fpop) { fpop.remove(); fpop = null; } }
+    document.addEventListener('click', closePop);
+    function openPop(anchor, title, opts, onPick) {
+      closePop();
+      var r = anchor.getBoundingClientRect();
+      fpop = document.createElement('div');
+      fpop.style.cssText = 'position:fixed;top:' + (r.bottom + 6) + 'px;left:' + r.left + 'px;min-width:160px;max-height:260px;overflow-y:auto;' +
+        'z-index:60;background:#fff;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.14);padding:6px';
+      fpop.innerHTML = '<div style="padding:6px 10px;font-size:11px;color:#737781;font-weight:600">' + title + '</div>' +
+        opts.map(function (o) {
+          return '<a data-v="' + o.v + '" style="display:block;padding:8px 10px;font-size:13px;color:#111c2d;border-radius:6px;cursor:pointer" ' +
+            'onmouseover="this.style.background=\'#f0f3ff\'" onmouseout="this.style.background=\'\'">' + o.t + '</a>';
+        }).join('');
+      fpop.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var a = e.target.closest('a[data-v]');
+        if (a) { onPick(a.dataset.v); closePop(); }
+      });
+      document.body.appendChild(fpop);
+    }
+    function paintChip(chip, key) {
+      var on = activeF[key] !== undefined;
+      chip.className = chip.className.replace(/bg-(primary-container|surface-container)[^"]*|text-(on-primary|on-surface-variant)[^"]*/g, '').trim();
+      chip.classList.add(on ? 'bg-primary-container' : 'bg-surface-container', on ? 'text-on-primary' : 'text-on-surface-variant');
+      var base = chip.dataset.label || chip.textContent.trim().split(' ')[0];
+      chip.dataset.label = key;
+      chip.innerHTML = key + (on ? ' · <b>' + chipTextVal(key) + '</b>' : '') +
+        '<span class="material-symbols-outlined text-[16px] align-middle">' + (on ? 'close' : 'expand_more') + '</span>';
+    }
+    function chipTextVal(k) {
+      var v = activeF[k];
+        var opt = CHIP_FILTERS[k] && CHIP_FILTERS[k].opts;
+        if (opt && !Array.isArray(opt)) {
+          var kk = Object.keys(opt).filter(function (x) { return opt[x] === v; })[0];
+          return kk || v;
+        }
+      return v;
+    }
+    qsa('section button, main button').forEach(function (chip) {
+      var txt = chip.textContent.replace(/expand_more|close|tune|filter_list|check/g, '').trim();
+      var key = Object.keys(CHIP_FILTERS).filter(function (k) { return txt === k || txt.indexOf(k) === 0; })[0];
+      if (!key) return;
+      chip.dataset.label = key;
+      chip.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var def = CHIP_FILTERS[key];
+        var opts = [{ t: '전체 (해제)', v: '' }];
+        if (Array.isArray(def.opts)) def.opts.forEach(function (o) { opts.push({ t: o, v: o }); });
+        else Object.keys(def.opts).forEach(function (o) { opts.push({ t: o, v: String(def.opts[o]) }); });
+        openPop(chip, key + ' 필터', opts, function (v) {
+          if (v === '') delete activeF[key];
+          else activeF[key] = Array.isArray(def.opts) ? v : parseInt(v, 10);
+          paintChip(chip, key); applyAll();
+        });
+      });
+      paintChip(chip, key);
+    });
+    // 전체 필터(tune) → 빠른 프리셋
+    var tuneBtn = qsa('main button, section button').filter(function (b) { return /전체 필터/.test(b.textContent); })[0];
+    if (tuneBtn) tuneBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      openPop(tuneBtn, '빠른 필터', [
+        { t: '인턴·체험형 공고', v: 'intern' }, { t: '마감 임박 (D-5 이내)', v: 'd5' },
+        { t: '서울 지역', v: 'seoul' }, { t: '매칭 70점 이상', v: 'm70' }, { t: '필터 전체 해제', v: 'clear' }
+      ], function (v) {
+        if (v === 'clear') { activeF = {}; }
+        else if (v === 'intern') activeF.__intern = true;
+        else if (v === 'd5') activeF['마감일'] = 5;
+        else if (v === 'seoul') activeF['근무지'] = '서울';
+        else if (v === 'm70') activeF.__match = 70;
+        qsa('section button, main button').forEach(function (c) { if (CHIP_FILTERS[c.dataset.label]) paintChip(c, c.dataset.label); });
+        applyAll();
+      });
+    });
+    // 페이지네이션 — 카드가 한 페이지에 다 들어가면 숨김
+    var pageWrap = qsa('main button').filter(function (b) { return /chevron_left|chevron_right/.test(b.textContent); })[0];
+    if (pageWrap && pageWrap.parentElement && qsa('.grid > div').length <= 12) {
+      pageWrap.parentElement.style.display = 'none';
+    }
   }
 
   /* ===================== s12 공고 상세 ===================== */
@@ -360,6 +487,49 @@
     refresh();
   }
 
+  /* ===== 컬럼 + 버튼 → 해당 스테이지로 공고 추가 (s14·s14b 공용) ===== */
+  var COL_STAGE = { '서류 준비 중': 'preparing', '지원 완료': 'applied', '서류 합격': 'screened', '면접 예정': 'interview', '최종 합격': 'offer', '불합격': 'rejected' };
+  function wireColumnAdds() {
+    qsa('main [class*="w-64"], main [class*="w-80"]').forEach(function (col) {
+      var h = qsa('*', col).filter(function (x) { return x.children.length === 0 && COL_STAGE[x.textContent.trim()]; })[0];
+      if (!h) return;
+      var stage = COL_STAGE[h.textContent.trim()];
+      var stageLabel = h.textContent.trim();
+      var b = qsa('button', col).filter(function (x) { return x.querySelector('svg') || /add/.test(x.textContent); })[0];
+      if (!b || b._jfWired) return;
+      b._jfWired = true;
+      b.title = '이 단계에 지원 내역 추가';
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var ex = qs('.jf-addpop'); if (ex) { ex.remove(); return; }
+        var onBoard = {};
+        JF.loadBoard().forEach(function (c) { onBoard[c.jobId] = true; });
+        var avail = JF.JOBS.filter(function (j) { return !onBoard[j.id]; });
+        var r = b.getBoundingClientRect();
+        var m = document.createElement('div');
+        m.className = 'jf-addpop';
+        m.style.cssText = 'position:fixed;top:' + Math.min(r.bottom + 6, innerHeight - 320) + 'px;left:' + Math.min(r.left, innerWidth - 300) + 'px;width:280px;max-height:300px;overflow-y:auto;z-index:60;background:#fff;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.16);padding:6px';
+        m.innerHTML = '<div style="padding:6px 10px;font-size:11px;color:#737781;font-weight:600">' + stageLabel + '에 추가</div>' +
+          (avail.length ? avail.map(function (j) {
+            var sc = JF.matchJob(j).score;
+            return '<a data-id="' + j.id + '" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;font-size:13px;color:#111c2d;border-radius:6px;cursor:pointer" onmouseover="this.style.background=\'#f0f3ff\'" onmouseout="this.style.background=\'\'">' +
+              '<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>' + j.company + '</b> ' + j.title + '</span><span style="font-family:monospace;font-weight:700;color:#0060ac;flex:none">' + sc + '</span></a>';
+          }).join('') : '<div style="padding:14px;font-size:13px;color:#737781;text-align:center">추가할 수 있는 공고가 없습니다</div>');
+        m.addEventListener('click', function (ev) {
+          ev.stopPropagation();
+          var a = ev.target.closest('a[data-id]'); if (!a) return;
+          var job = JF.JOBS.filter(function (j) { return j.id === a.dataset.id; })[0];
+          if (!job) return;
+          var res = JF.addFromJob(job, JF.matchJob(job).score);
+          if (res.card && stage !== 'preparing') JF.setStage(res.card.id, stage);
+          location.reload();
+        });
+        document.body.appendChild(m);
+        document.addEventListener('click', function () { var x = qs('.jf-addpop'); if (x) x.remove(); }, { once: true });
+      });
+    });
+  }
+
   /* ===================== s14 칸반 ===================== */
   if (PAGE === 's14_kanban') {
     var STAGE_OF_COL = { '서류 준비 중': 'preparing', '지원 완료': 'applied', '서류 합격': 'screened', '면접 예정': 'interview', '최종 합격': 'offer', '불합격': 'rejected' };
@@ -516,6 +686,7 @@
       cardEl.addEventListener('dragend', function () { setTimeout(persistPositions, 50); });
     });
     refreshColCounts();
+    wireColumnAdds();
   }
 
   /* ===================== s14b 스킬 갭 액션 ===================== */
@@ -574,6 +745,7 @@
         b.addEventListener('click', function () { location.href = './s11_listings.html'; });
       }
     });
+    wireColumnAdds();
   }
 
   /* ===================== s15 자소서 에디터 ===================== */
@@ -642,6 +814,84 @@
         el.textContent = el.textContent.replace(/v\d+/, 'v' + Math.max(3, versions.length + 3));
       }
     });
+    // ===== 에디터 툴바 — 실제 텍스트 편집 =====
+    if (ta) {
+      var DOC_KEY = 'jf-cl-docs';
+      function readDocs() { try { return JSON.parse(localStorage.getItem(DOC_KEY) || '{}'); } catch (e) { return {}; } }
+      function saveDoc(i, text) { var d = readDocs(); d[i] = text; localStorage.setItem(DOC_KEY, JSON.stringify(d)); }
+      var curDoc = 1;
+      function wrapSel(pre, post) {
+        var s = ta.selectionStart, e = ta.selectionEnd, v = ta.value;
+        ta.value = v.slice(0, s) + pre + v.slice(s, e) + (post || pre) + v.slice(e);
+        ta.focus(); ta.selectionStart = s + pre.length; ta.selectionEnd = e + pre.length;
+        ta.dispatchEvent(new Event('input'));
+      }
+      function prefixLines(fn) {
+        var s = ta.selectionStart, e = ta.selectionEnd, v = ta.value;
+        var start = v.lastIndexOf('\n', s - 1) + 1;
+        var lines = v.slice(start, e).split('\n'), n = 0;
+        var rep = lines.map(function (l) { return l.trim() ? fn(++n, l) : l; }).join('\n');
+        ta.value = v.slice(0, start) + rep + v.slice(e);
+        ta.dispatchEvent(new Event('input'));
+      }
+      var toolMap = {
+        'format_bold': function () { wrapSel('**'); },
+        'format_italic': function () { wrapSel('*'); },
+        'code': function () { wrapSel('`'); },
+        'format_list_bulleted': function () { prefixLines(function (n, l) { return '- ' + l; }); },
+        'format_list_numbered': function () { prefixLines(function (n, l) { return n + '. ' + l; }); },
+        'undo': function () { document.execCommand('undo'); },
+        'redo': function () { document.execCommand('redo'); }
+      };
+      qsa('button').forEach(function (b) {
+        var icon = (qs('.material-symbols-outlined', b) || {}).textContent;
+        if (icon && toolMap[icon.trim()]) b.addEventListener('click', toolMap[icon.trim()]);
+        if (/본문 복사/.test(b.textContent)) b.addEventListener('click', function () {
+          navigator.clipboard.writeText(ta.value).then(function () { say('본문이 클립보드에 복사되었습니다', ta.value.length + '자'); });
+        });
+        // 맞춤법 검사 → 규칙 기반 실제 검사 패널
+        if (/맞춤법 검사/.test(b.textContent)) b.addEventListener('click', function () {
+          var res = JF.scoreResume(ta.value);
+          var ex = qs('.jf-spell'); if (ex) ex.remove();
+          var p = document.createElement('div');
+          p.className = 'jf-spell';
+          p.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:420px;max-height:70vh;overflow-y:auto;z-index:70;background:#fff;border-radius:14px;box-shadow:0 16px 48px rgba(0,0,0,.22);padding:20px';
+          p.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+            '<b style="font-size:16px;color:#111c2d">규칙 기반 문장 검사</b>' +
+            '<span style="font-size:22px;font-weight:800;color:' + (res.total >= 60 ? '#004124' : '#ba1a1a') + '">' + res.total + '점</span></div>' +
+            '<div style="font-size:12px;color:#424750;margin-bottom:12px">' + res.stats.chars + '자 · 문장 ' + res.stats.sentences + '개 · 평균 ' + res.stats.avgSentence + '자</div>' +
+            (res.strengths.length ? '<div style="margin-bottom:10px"><b style="font-size:13px;color:#004124">잘된 점</b>' + res.strengths.map(function (s) { return '<div style="font-size:13px;color:#111c2d;padding:6px 0;border-bottom:1px solid #f0f3ff">✓ ' + s + '</div>'; }).join('') + '</div>' : '') +
+            (res.weaknesses.length ? '<div><b style="font-size:13px;color:#ba1a1a">보완할 점</b>' + res.weaknesses.map(function (s) { return '<div style="font-size:13px;color:#111c2d;padding:6px 0;border-bottom:1px solid #f0f3ff">• ' + s + '</div>'; }).join('') + '</div>' : '') +
+            '<button style="margin-top:14px;width:100%;padding:9px;border:none;border-radius:8px;background:#00386f;color:#fff;font-size:13px;cursor:pointer">닫기</button>';
+          p.querySelector('button').addEventListener('click', function () { p.remove(); });
+          document.body.appendChild(p);
+        });
+      });
+      // 문서 섹션 1·2·3 — 섹션별 초안 전환
+      qsa('main button, main li, main div').forEach(function (el) {
+        var m = el.textContent.trim().match(/^([123])\s+([^\d]{4,30})/);
+        if (!m || el.children.length > 6 || el.dataset.docWired) return;
+        var doc = qsa('main *').filter(function (x) {
+          return x.children.length === 0 && /^[123]$/.test(x.textContent.trim()) && x.parentElement && el.contains(x.parentElement);
+        })[0];
+        el.dataset.docWired = '1';
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', function (ev) {
+          var btn = ev.target.closest('button, li, div');
+          var numEl = qsa('*', btn).filter(function (x) { return x.children.length === 0 && /^[123]$/.test(x.textContent.trim()); })[0];
+          var n = numEl ? parseInt(numEl.textContent) : parseInt(btn.textContent.trim()[0]);
+          if (!n || n === curDoc) return;
+          saveDoc(curDoc, ta.value);
+          var docs = readDocs();
+          ta.value = docs[n] || (n === 1 ? (JF.getDraft() || {}).text || ta.value : '');
+          ta.dispatchEvent(new Event('input'));
+          curDoc = n;
+          say('문서 ' + n + '번으로 전환', '섹션별 초안이 분리 저장됩니다.');
+        });
+      });
+      // 복원 후 현재 문서 초안도 저장
+      if (readDocs()[1]) ta.value = readDocs()[1];
+    }
   }
 
   /* ===================== s16 분석 ===================== */
@@ -714,6 +964,7 @@
     // PDF 다운로드 — 브라우저 인쇄(PDF 저장)
     qsa('main button').forEach(function (b) {
       if (/PDF 다운로드/.test(b.textContent)) b.addEventListener('click', function () { window.print(); });
+      if (/수정해서 다시 분석/.test(b.textContent)) b.addEventListener('click', function () { location.href = 's15_coverletter.html'; });
     });
   }
 
@@ -738,6 +989,10 @@
       if (/^\d+%$/.test(t) && el.closest('div') && /커버리지|커버/.test(el.parentElement.textContent)) {
         el.textContent = Math.round(cov.totalCoverage * 100) + '%';
       }
+    });
+    // PDF 내보내기 — 브라우저 인쇄(PDF 저장)
+    qsa('main button').forEach(function (b) {
+      if (/PDF 내보내기/.test(b.textContent)) b.addEventListener('click', function () { window.print(); });
     });
   }
 
@@ -781,6 +1036,20 @@
         });
       }
     });
+    // 즉시 연결 → 최고 매칭 공고 상세로 / 상담·추가 버튼 → 안내
+    qsa('button').forEach(function (b) {
+      var t = b.textContent.trim();
+      if (/즉시 연결/.test(t)) b.addEventListener('click', function () {
+        var best = JF.JOBS.slice().sort(function (x, y) { return JF.matchJob(y).score - JF.matchJob(x).score; })[0];
+        if (best) location.href = 's12_detail.html?job=' + best.id;
+      });
+      if (/커리어 상담 예약/.test(t)) b.addEventListener('click', function () {
+        say('상담 예약 접수 (데모)', '커리어 센터 담당자 확인 후 확정 안내가 알림으로 발송됩니다.');
+      });
+      if (/^직무 추가$|프로젝트 추가/.test(t)) b.addEventListener('click', function () {
+        say('데모 화면', '이 버튼은 시연용 UI입니다 — 스택 추가로 스킬 편집을 시연할 수 있습니다.');
+      });
+    });
     recompute();
   }
 
@@ -799,7 +1068,30 @@
           say('승인 요청이 제출되었습니다', '관리자 승인 큐에 추가되며, 게시 후 공고 목록에 노출됩니다.');
         });
       }
+      // 임시 저장 — 폼 초안을 localStorage에 보존·복원
+      if (/임시 저장/.test(b.textContent)) b.addEventListener('click', function () {
+        var draft = qsa('main input, main textarea').map(function (el) { return el.value; });
+        localStorage.setItem('jf-post-draft', JSON.stringify(draft));
+        say('임시 저장 완료', '작성 중인 공고 초안이 이 브라우저에 저장되었습니다.');
+      });
+      // 직무·고용형태 드롭다운 — 실제 옵션 순환
+      if (/expand_more/.test(b.textContent) && /백엔드|서버|정규직|인턴|프론트엔드|데이터/.test(b.textContent)) {
+        var jobOpts = ['백엔드 / 서버', '프론트엔드', '데이터 엔지니어링', 'DevOps / 인프라', '모바일'];
+        var typeOpts = ['정규직', '인턴(3개월)', '체험형 인턴', '계약직'];
+        var opts = /정규직|인턴|계약|체험/.test(b.textContent) && !/백엔드|프론트엔드|엔지니어링/.test(b.textContent) ? typeOpts : jobOpts;
+        b.addEventListener('click', function () {
+          var cur = b.textContent.replace(/expand_more/g, '').trim();
+          var i = opts.findIndex(function (o) { return cur.indexOf(o.split(' ')[0].split('/')[0].trim()) > -1; });
+          var next = opts[(i + 1) % opts.length];
+          b.innerHTML = next + '<span class="material-symbols-outlined text-[18px]">expand_more</span>';
+        });
+      }
     });
+    // 저장된 초안 복원
+    try {
+      var postDraft = JSON.parse(localStorage.getItem('jf-post-draft') || 'null');
+      if (postDraft) qsa('main input, main textarea').forEach(function (el, i) { if (postDraft[i]) el.value = postDraft[i]; });
+    } catch (e) {}
   }
 
   /* ===================== s41 승인 큐 ===================== */
@@ -863,6 +1155,22 @@
             setTimeout(refreshTabCounts, 0);
           });
         }
+        if (act === '상세') b.addEventListener('click', function () {
+          say('심사 상세 (데모)', company + ' — 등록 정보와 분류 키워드 심사 내역은 다음 단계에서 제공됩니다.');
+        });
+      });
+    });
+    // 상태 탭 필터 — 승인 대기/게시 중/반려/전체 실제 필터링
+    var tabMap = { '승인 대기': '승인 대기', '게시 중': '게시 중', '반려': '반려', '전체': null };
+    qsa('section button').forEach(function (b) {
+      var label = b.textContent.replace(/\d+/g, '').trim();
+      if (!(label in tabMap)) return;
+      b.addEventListener('click', function () {
+        var want = tabMap[label];
+        qsa('tbody tr').forEach(function (tr) {
+          var st = statusSpan(tr);
+          tr.style.display = (!want || (st && st.textContent.trim() === want)) ? '' : 'none';
+        });
       });
     });
   }
@@ -893,11 +1201,33 @@
         say(now ? '승인 처리' : '보류로 변경', name + ' — 선택 상태가 저장되었습니다.');
       });
     });
+    // 승인 항목 일괄 게시 — 승인됨 상태의 공고를 게시 큐로
+    qsa('main button').forEach(function (b) {
+      if (/일괄 게시/.test(b.textContent)) b.addEventListener('click', function () {
+        var m = readU(), n = 0;
+        qsa('tbody tr').forEach(function (tr) {
+          var nm = tr.querySelectorAll('td')[1];
+          var name = nm ? (nm.querySelector('.truncate') || nm.querySelector('.font-semibold') || nm).textContent.trim() : null;
+          var badge = qsa('td button', tr).filter(function (x) { return /승인됨/.test(x.textContent); })[0];
+          if (name && badge && m[name] === '승인됨') { JF.setReviewStatus(name, '승인 대기'); n++; }
+        });
+        say(n ? n + '건이 승인 큐로 게시되었습니다' : '게시할 승인 항목이 없습니다', '공고 승인 화면에서 최종 게시를 진행하세요.');
+      });
+      // 다른 파일 → 업로드 초기화
+      if (/다른 파일/.test(b.textContent)) b.addEventListener('click', function () {
+        localStorage.removeItem(UKEY);
+        qsa('tbody tr').forEach(function (tr) {
+          qsa('td button', tr).forEach(function (x) { if (/승인됨|보류됨/.test(x.textContent)) paintBadge(x, false); });
+        });
+        say('업로드 초기화', '분류 승인 상태가 모두 보류로 되돌아갔습니다.');
+      });
+    });
   }
 
   /* ===================== s33 지원자 목록 ===================== */
   if (PAGE === 's33_applicants') {
     var apps = JF.applicantsFor('1');
+    var curJobId = '1';
     var tbody33 = qs('tbody');
     var pageBtns = qsa('main button').filter(function (b) { return /^\d+$/.test(b.textContent.trim()); });
     var infoEl = qsa('main span').filter(function (s) { return /\d+~\d+\s*\/\s*\d+명?/.test(s.textContent); })[0];
@@ -927,18 +1257,53 @@
       });
     }
     // 요약 칩 — 실측 카운트로 동기화
-    var cnt = { '서류 합격': 0, '서류 검토': 0, '불합격': 0 };
-    apps.forEach(function (a) { cnt[statusOf(a.score)]++; });
-    qsa('main span, main strong').forEach(function (el) {
-      var t = el.textContent.trim();
-      var ctx = el.parentElement ? el.parentElement.textContent : '';
-      if (/^\d+$/.test(t)) {
-        if (/검토 중/.test(ctx)) el.textContent = cnt['서류 검토'];
-        else if (/서류 합격/.test(ctx)) el.textContent = cnt['서류 합격'];
-        else if (/불합격/.test(ctx)) el.textContent = cnt['불합격'];
-        else if (/총 지원자/.test(ctx)) el.textContent = apps.length;
-      }
-    });
+    function syncChips() {
+      var cnt = { '서류 합격': 0, '서류 검토': 0, '불합격': 0 };
+      apps.forEach(function (a) { cnt[statusOf(a.score)]++; });
+      qsa('main span, main strong').forEach(function (el) {
+        var t = el.textContent.trim();
+        var ctx = el.parentElement ? el.parentElement.textContent : '';
+        if (/^\d+$/.test(t)) {
+          if (/검토 중/.test(ctx)) el.textContent = cnt['서류 검토'];
+          else if (/서류 합격/.test(ctx)) el.textContent = cnt['서류 합격'];
+          else if (/불합격/.test(ctx)) el.textContent = cnt['불합격'];
+          else if (/총 지원자/.test(ctx)) el.textContent = apps.length;
+        }
+      });
+    }
+    // 공고 선택 드롭다운 — 실제 공고별 지원자 전환
+    var jobBtn = qsa('main button').filter(function (b) { return /—/.test(b.textContent) && /개발자|엔지니어|인턴/.test(b.textContent); })[0];
+    if (jobBtn) {
+      jobBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var ex = qs('.jf-jobsel'); if (ex) { ex.remove(); return; }
+        var r = jobBtn.getBoundingClientRect();
+        var m = document.createElement('div');
+        m.className = 'jf-jobsel';
+        m.style.cssText = 'position:fixed;top:' + (r.bottom + 6) + 'px;left:' + r.left + 'px;min-width:260px;max-height:300px;overflow-y:auto;' +
+          'z-index:60;background:#fff;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.14);padding:6px';
+        m.innerHTML = JF.JOBS.map(function (j) {
+          var n = JF.applicantsFor(j.id).length;
+          return '<a data-id="' + j.id + '" style="display:block;padding:9px 12px;font-size:13px;color:#111c2d;border-radius:6px;cursor:pointer" ' +
+            'onmouseover="this.style.background=\'#f0f3ff\'" onmouseout="this.style.background=\'\'">' +
+            '<b>' + j.company + '</b> — ' + j.title + ' <span style="color:#737781;font-size:11px">' + n + '명</span></a>';
+        }).join('');
+        m.addEventListener('click', function (ev) {
+          ev.stopPropagation();
+          var a = ev.target.closest('a[data-id]');
+          if (!a) return;
+          curJobId = a.dataset.id;
+          var job = cardJobById(curJobId);
+          if (job) jobBtn.innerHTML = job.company + ' — ' + job.title + '<span class="material-symbols-outlined text-[18px] align-middle">expand_more</span>';
+          apps = JF.applicantsFor(curJobId);
+          page = 1; syncChips(); render(); m.remove();
+        });
+        document.body.appendChild(m);
+        document.addEventListener('click', function () { var x = qs('.jf-jobsel'); if (x) x.remove(); }, { once: true });
+      });
+    }
+    function cardJobById(id) { return JF.JOBS.filter(function (j) { return j.id === id; })[0]; }
+    syncChips();
     pageBtns.forEach(function (b) {
       b.addEventListener('click', function () { page = parseInt(b.textContent.trim(), 10) || 1; render(); });
     });
@@ -1009,6 +1374,47 @@
       input.value = 'ReactJS와 k8s 경험, EMAIL 마케팅 툴 사용';
       runTester();
     }
+    // 카테고리 탭 — 사전 행 실제 필터링
+    var dictRows = qsa('tbody tr, main li').filter(function (r) { return /React|Java|Python|Docker|Kubernetes|SQL|스킬/.test(r.textContent); });
+    qsa('main button').forEach(function (tab) {
+      var cat = tab.textContent.trim();
+      if (!/^(전체|Frontend|Backend|DevOps|Data|기타|AI|Mobile)$/.test(cat)) return;
+      tab.addEventListener('click', function () {
+        dictRows.forEach(function (r) {
+          r.style.display = (cat === '전체' || r.textContent.indexOf(cat) > -1) ? '' : 'none';
+        });
+      });
+    });
+    // 스킬 추가 → 커스텀 사전 확장 (localStorage 영속 + 테이블 반영)
+    function loadCustom() { try { return JSON.parse(localStorage.getItem('jf-custom-skills') || '[]'); } catch (e) { return []; } }
+    function appendSkillRow(name, alias) {
+      var tb = qs('tbody'); if (!tb) return;
+      var tr = document.createElement('tr');
+      tr.className = 'border-b border-surface-container hover:bg-surface-container-low transition-colors';
+      tr.innerHTML = '<td class="py-3 px-3 font-body-sm font-semibold text-on-surface">' + esc(name) + '</td>' +
+        '<td class="py-3 px-3 font-body-sm text-on-surface-variant">' + esc(alias || '—') + '</td>' +
+        '<td class="py-3 px-3"><span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-[11px]">사용자 추가</span></td>';
+      tb.insertBefore(tr, tb.firstChild);
+    }
+    loadCustom().forEach(function (s) { appendSkillRow(s.name, s.alias); });
+    qsa('main button').forEach(function (b) {
+      var t = b.textContent.trim();
+      if (/스킬 추가/.test(t)) b.addEventListener('click', function () {
+        var name = prompt('추가할 스킬 표준 표기 (예: Redis)');
+        if (!name || !name.trim()) return;
+        var alias = prompt('별칭 (쉼표 구분, 없으면 비워두기)') || '';
+        var cs = loadCustom(); cs.push({ name: name.trim(), alias: alias.trim() });
+        localStorage.setItem('jf-custom-skills', JSON.stringify(cs));
+        appendSkillRow(name.trim(), alias.trim());
+        say('사전에 추가되었습니다', name + ' — 사용자 정의 스킬로 저장됩니다.');
+      });
+      if (/학과 추가/.test(t)) b.addEventListener('click', function () {
+        say('학과 확장 (데모)', '컴퓨터공학과 전용 인스턴스 — 타 학과 연동은 다음 단계에서 제공됩니다.');
+      });
+      if (t === 'edit' || /^edit\s*$/.test(t)) b.addEventListener('click', function () {
+        say('사전 편집 (데모)', '매핑 규칙 편집은 관리자 권한으로 별도 제공됩니다.');
+      });
+    });
   }
 
   /* ===================== s81 학과 통계 ===================== */

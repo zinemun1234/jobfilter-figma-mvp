@@ -60,21 +60,22 @@
   <h2>화면별 변경 내역<span class="sub">16개 화면 전수 — 시안 대비 실제 동작</span></h2>
   <table>
     <tr><th style="width:110px">화면</th><th style="width:34%">Figma 시안 (정적)</th><th>배포 데모 (동작)</th></tr>
+    <tr><td class="scr">공통 헤더</td><td class="before">알림 벨 배지 "3" 고정, 클릭 무반응</td><td><b>실제 알림 드롭다운</b> — 마감 임박 공고·면접 예정·최근 상태 전이로 생성, 배지 = 실측 건수. 아바타 → 프로필/분석 메뉴</td></tr>
     <tr><td class="scr">s10 대시보드</td><td class="before">KPI 숫자 고정, 프로필 게이지 장식</td><td>칸반 상태에서 <b>지원 중·면접 건수 계산</b>, 프로필 완성도를 보유 스킬 수로 산출</td></tr>
-    <tr><td class="scr">s11 공고 목록</td><td class="before">점수 92/88/84 고정, "총 47건"</td><td><b>matchJob 실측 점수</b>(카카오 95·당근 80·토스 60·나머지 20), 검색 필터, 건수 동적 동기화</td></tr>
+    <tr><td class="scr">s11 공고 목록</td><td class="before">점수 92/88/84 고정, "총 47건", 필터 칩 장식</td><td><b>matchJob 실측 점수</b>(카카오 95·당근 80·토스 60·나머지 20), <b>고용형태·근무지·태그·마감일 실제 조합 필터</b> + 건수 라이브 동기화, 최신순↔매칭순 정렬</td></tr>
     <tr><td class="scr">s12 공고 상세</td><td class="before">단일 정적 공고</td><td><b>?job=N 파라미터</b>로 6개 공고 각각 하이드레이션, 북마크 토글·칸반 추가 버튼 동작</td></tr>
     <tr><td class="scr">s13 북마크</td><td class="before">— (시안에 없던 신규 화면)</td><td>저장된 북마크 카드 렌더, 해제 버튼, 건수 배지 동기화</td></tr>
-    <tr><td class="scr">s14 칸반</td><td class="before">드래그만 되는 장식 보드</td><td>카드 추가·단계 이동 시 <b>상태 이력 기록 + 영속</b>, 타이틀 "총 N개" 동기화 → s81 통계와 같은 데이터 공유</td></tr>
+    <tr><td class="scr">s14 칸반</td><td class="before">드래그만 되는 장식 보드, 컬럼 + 버튼 무반응</td><td>카드 추가·단계 이동 시 <b>상태 이력 기록 + 영속</b>, <b>컬럼 + 버튼 → 해당 단계로 공고 직접 추가</b>, 카드 클릭 → 스킬 갭 펼침, KPI 실측 동기화</td></tr>
     <tr><td class="scr">s14b 체크리스트</td><td class="before">체크 아이콘 장식</td><td>항목 토글 → 영속 + 카드별 N/M 진행 배지 갱신, 새로고침 후에도 유지</td></tr>
-    <tr><td class="scr">s15 자소서</td><td class="before">텍스트만 있는 에디터</td><td>초안 자동 저장·글자수 카운터, <b>버전 스냅샷</b> 저장 → s16 분석이 초안 기준으로 재채점</td></tr>
-    <tr><td class="scr">s16 분석</td><td class="before">86점·항목 점수 고정</td><td><b>scoreResume 실시간 재채점</b> — 원형 게이지·항목 막대·강점/약점·키워드 칩이 초안 내용에 따라 전부 바뀜</td></tr>
-    <tr><td class="scr">s17 히트맵</td><td class="before">칩 수치 고정</td><td>keywordCoverage 실측 — 정확 일치/별칭 포함 커버리지 %, 칩별 빈도·별칭(*) 표시</td></tr>
+    <tr><td class="scr">s15 자소서</td><td class="before">텍스트만 있는 에디터, 툴바 장식</td><td>초안 자동 저장·글자수 카운터, <b>버전 스냅샷</b> 저장 → s16 분석이 초안 기준으로 재채점, <b>본문 복사·맞춤법 검사(규칙 엔진 실측 패널)·문서 섹션 전환</b> 동작</td></tr>
+    <tr><td class="scr">s16 분석</td><td class="before">86점·항목 점수 고정, 버튼 무반응</td><td><b>scoreResume 실시간 재채점</b> — 원형 게이지·항목 막대·강점/약점·키워드 칩이 초안 내용에 따라 전부 바뀜, PDF(인쇄)·"수정해서 다시 분석" → s15 이동</td></tr>
+    <tr><td class="scr">s17 히트맵</td><td class="before">칩 수치 고정, 내보내기 무반응</td><td>keywordCoverage 실측 — 정확 일치/별칭 포함 커버리지 %, 칩별 빈도·별칭(*) 표시, PDF 내보내기 → 인쇄</td></tr>
     <tr><td class="scr">s27 프로필</td><td class="before">점수 예시 고정</td><td>보유 스킬 기준 최고·평균 매칭 점수와 완성도 % 실측 표시</td></tr>
     <tr><td class="scr">s31 공고 등록</td><td class="before">제출해도 반영 없음</td><td>등록 → 저장 → <b>s41 승인 큐에 행 생성</b> → 승인 시 s11 목록에 "게시 중" 표시 (체인 완성)</td></tr>
-    <tr><td class="scr">s33 지원자</td><td class="before">8행만 있는 표</td><td><b>코호트 24명</b>을 matchJobWith로 실측 정렬 → 8명씩 페이지네이션, 요약 카운트 실측</td></tr>
-    <tr><td class="scr">s41 승인 큐</td><td class="before">승인해도 되돌아감</td><td>승인/반려 클릭 → 상태 영속 + 탭 카운트 갱신, 기업 등록 공고도 같은 큐에서 처리</td></tr>
-    <tr><td class="scr">s42 일괄 등록</td><td class="before">배지 토글 무반응</td><td>승인됨/보류됨 배지 토글 → localStorage 영속, 제외 행(중복·마감)은 토글 없음</td></tr>
-    <tr><td class="scr">s43 스킬 사전</td><td class="before">읽기 전용 예시 화면</td><td><b>매칭 테스터 입력창</b> — 타이핑 즉시 별칭→표준 표기 매핑 결과 표시</td></tr>
+    <tr><td class="scr">s33 지원자</td><td class="before">8행만 있는 표, 공고 선택 장식</td><td><b>공고 선택 → 공고별 지원자 전환</b>, 코호트 24명을 matchJobWith로 실측 정렬 → 페이지네이션, CSV 내보내기</td></tr>
+    <tr><td class="scr">s41 승인 큐</td><td class="before">승인해도 되돌아감, 탭 장식</td><td>승인/반려 클릭 → 상태 영속 + 탭 카운트 갱신, <b>상태 탭 실제 행 필터링</b>, 상세 → 안내</td></tr>
+    <tr><td class="scr">s42 일괄 등록</td><td class="before">배지 토글 무반응</td><td>승인됨/보류됨 배지 토글 → 영속, <b>일괄 게시 → 승인 큐 전송, 다른 파일 → 초기화</b></td></tr>
+    <tr><td class="scr">s43 스킬 사전</td><td class="before">읽기 전용 예시 화면</td><td><b>매칭 테스터 입력창</b> — 타이핑 즉시 별칭→표준 표기 매핑, <b>스킬 추가 → 커스텀 사전 영속</b>, 카테고리 탭 필터링</td></tr>
     <tr><td class="scr">s81 학과 통계</td><td class="before">"총 지원 84건" 고정</td><td>칸반 보드에서 <b>퍼널·전환율·바 너비 전부 계산</b> — 칸반을 움직이면 통계가 바뀜</td></tr>
   </table>
 
