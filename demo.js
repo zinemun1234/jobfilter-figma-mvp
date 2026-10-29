@@ -29,10 +29,21 @@
     JF.JOBS.forEach(function (j) { jobsByCompany[j.company] = j; });
     var bms = JF.readBookmarkIds();
     var grid = qs('.grid.grid-cols-1, .grid');
+    // 상단 "총 N건" 카운트 — 실제 공고 수로 동기화
+    qsa('main strong, main span, main p').forEach(function (el) {
+      var t = el.textContent.trim();
+      if (/^\d+건$/.test(t) && el.children.length === 0) el.textContent = (JF.JOBS.length + JF.getRegisteredJobs().filter(function (rj) { return JF.getReviewStatus()[rj.company] !== '반려'; }).length) + '건';
+    });
 
-    // 기업 등록 공고(jf-registered-jobs) 카드 삽입
+    // 기업 등록 공고(jf-registered-jobs) 카드 삽입 — 승인 상태 반영 (반려 시 미노출)
+    var revMap = JF.getReviewStatus();
     JF.getRegisteredJobs().forEach(function (rj) {
       if (!grid) return;
+      var st = revMap[rj.company] || '승인 대기';
+      if (st === '반려') return;
+      var badge = st === '게시 중'
+        ? '<span class="font-label-sm text-label-sm text-tertiary font-bold">게시 중</span>'
+        : '<span class="font-label-sm text-label-sm text-primary font-bold">승인 대기</span>';
       var card = document.createElement('div');
       card.className = 'bg-surface-container-lowest rounded-xl p-space-md shadow-sm border border-primary flex flex-col gap-space-sm';
       card.innerHTML =
@@ -42,10 +53,8 @@
         '<h3 class="font-headline-sm text-headline-sm text-on-surface">' + esc(rj.title) + '</h3></div></div></div>' +
         '<p class="font-body-sm text-body-sm text-on-surface-variant">' + esc(rj.type || '') + ' · ' + esc(rj.location || '') + '</p>' +
         '<div class="flex items-center justify-between mt-auto pt-space-sm border-t border-surface-container">' +
-        '<span class="font-label-sm text-label-sm text-primary font-bold">등록 신청됨</span>' +
-        '<button class="px-3 py-1.5 rounded-lg bg-surface-container text-on-surface-variant font-label-sm text-label-sm">승인 대기</button></div>';
+        badge + '<button class="px-3 py-1.5 rounded-lg bg-surface-container text-on-surface-variant font-label-sm text-label-sm">기업 등록 공고</button></div>';
       grid.insertBefore(card, grid.firstChild);
-      say('등록 신청 공고 반영', rj.company + ' — 관리자 승인 후 게시됩니다.');
     });
 
     // 카드 ↔ 공고 매핑 → 실측 점수 + 북마크 상태 + 상세 링크
@@ -361,42 +370,53 @@
 
   /* ===================== s14b 체크리스트 ===================== */
   if (PAGE === 's14b_checklist') {
-    qsa('[class*="cursor-pointer"], .cursor-pointer').forEach(function () {});
-    // 카드별 체크리스트 항목 — 카드 텍스트에서 카드 식별
-    qsa('div').forEach(function (d) {
-      var card = JF.SEED_CARDS.filter(function (c) {
-        return c.items && d.textContent.indexOf(c.company) > -1 && d.textContent.indexOf(c.role.split(' ')[0]) > -1;
-      })[0];
-      if (!card || d.dataset.bound) return;
-      var lis = qsa('div', d).filter(function (x) {
-        return x.textContent.length < 60 && card.items.some(function (it) { return x.textContent.indexOf(it.label.slice(0, 12)) > -1; });
-      });
+    // 카드 = '보완 체크리스트'를 포함한 컨테이너, 항목 = 내부 label (박스 span + 텍스트 span)
+    qsa('main label[class*="cursor-pointer"], main label').forEach(function () {});
+    qsa('main div').forEach(function (cardEl) {
+      if (cardEl.dataset.bound) return;
+      var lis = qsa('label', cardEl).filter(function (l) { return l.children.length >= 2 && l.children[0].tagName === 'SPAN'; });
       if (lis.length < 2) return;
-      d.dataset.bound = '1';
-      var saved = JF.getChecklist(card.id);
-      lis.slice(0, card.items.length).forEach(function (li, i) {
-        var done = saved ? !!saved[i] : card.items[i].done;
+      var compEl = cardEl.querySelector('.font-label-sm');
+      var roleEl = cardEl.querySelector('p');
+      var cardId = 'chk-' + (compEl ? compEl.textContent.trim() : 'card') + '-' + (roleEl ? roleEl.textContent.trim().slice(0, 10) : '');
+      cardEl.dataset.bound = '1';
+      function paint(li, done) {
+        var box = li.children[0], txt = li.children[1];
+        if (done) {
+          box.className = 'w-4 h-4 mt-0.5 rounded border-2 border-primary bg-primary flex items-center justify-center shrink-0';
+          box.innerHTML = '<span class="material-symbols-outlined text-on-primary text-[12px]">check</span>';
+          if (txt) { txt.classList.add('line-through'); txt.classList.add('text-on-surface-variant'); txt.classList.remove('text-on-surface'); }
+        } else {
+          box.className = 'w-4 h-4 mt-0.5 rounded border-2 border-outline-variant bg-surface-container-lowest flex items-center justify-center shrink-0';
+          box.innerHTML = '';
+          if (txt) { txt.classList.remove('line-through'); txt.classList.remove('text-on-surface-variant'); txt.classList.add('text-on-surface'); }
+        }
+      }
+      function refreshBadge() {
+        var flags = JF.getChecklist(cardId) || [];
+        var done = flags.filter(Boolean).length;
+        qsa('span', cardEl).forEach(function (s) {
+          if (/체크리스트 \d+\/\d+/.test(s.textContent)) s.textContent = '체크리스트 ' + done + '/' + lis.length;
+        });
+      }
+      var saved = JF.getChecklist(cardId);
+      if (!saved) {
+        var init = lis.map(function (li) { return !!(li.children[0] && li.children[0].querySelector('.material-symbols-outlined')); });
+        var st = JSON.parse(localStorage.getItem('jf-kanban') || '{}');
+        st.checklist = st.checklist || {}; st.checklist[cardId] = init;
+        localStorage.setItem('jf-kanban', JSON.stringify(st));
+        saved = init;
+      }
+      lis.forEach(function (li, i) {
+        var done = !!saved[i];
         paint(li, done);
-        li.style.cursor = 'pointer';
-        li.addEventListener('click', function () {
-          var now = JF.toggleChecklist(card.id, i);
-          paint(li, now);
-          updateProgress(d);
+        li.addEventListener('click', function (e) {
+          e.preventDefault();
+          paint(li, JF.toggleChecklist(cardId, i));
+          refreshBadge();
         });
       });
-      function paint(li, done) {
-        var ic = qs('.material-symbols-outlined', li);
-        if (ic) ic.textContent = done ? 'check_box' : 'check_box_outline_blank';
-        li.style.opacity = done ? '0.6' : '1';
-      }
-      function updateProgress(host) {
-        var flags = JF.getChecklist(card.id) || card.items.map(function (i2) { return i2.done; });
-        var done = flags.filter(Boolean).length;
-        qsa('span, p', host).forEach(function (el) {
-          if (/^\d+\/\d+$/.test(el.textContent.trim())) el.textContent = done + '/' + flags.length;
-        });
-      }
-      updateProgress(d);
+      refreshBadge();
     });
   }
 
@@ -437,6 +457,21 @@
         }
       });
     }
+    // 스냅샷 생성 버튼 — 실제 버전 저장 + 표시 갱신
+    qsa('button').forEach(function (b) {
+      if (/스냅샷 생성/.test(b.textContent)) {
+        b.addEventListener('click', function () {
+          var v = JF.snapshotVersion();
+          var label = 'v' + (3 + JF.getVersions().length);
+          qsa('span, p, div, li, strong').forEach(function (el) {
+            if (el.children.length === 0 && /^v\d+\s*\/\s*v\d+$/.test(el.textContent.trim())) {
+              el.textContent = el.textContent.replace(/v\d+$/, label);
+            }
+          });
+          say(label + ' 스냅샷 저장', '규칙 엔진 점수 ' + v.score + '점이 버전에 기록되었습니다.');
+        });
+      }
+    });
     // 버전 목록 실측화
     var versions = JF.getVersions();
     if (versions.length) {
@@ -456,14 +491,12 @@
   /* ===================== s16 분석 ===================== */
   if (PAGE === 's16_analysis') {
     var res = JF.scoreResume(JF.currentResume());
-    // 종합 점수 — 게이지 원호와 중앙 숫자만 갱신 (래퍼 div를 innerHTML로 교체하면 SVG가 사라짐)
-    var gaugeCircle = qs('main svg circle[stroke-dasharray]');
-    if (gaugeCircle) {
-      gaugeCircle.setAttribute('stroke-dasharray', Math.min(res.total, 100) + ' 100');
-      var center = gaugeCircle.closest('svg').parentElement.querySelector('.absolute.inset-0');
-      var bigNum = center && qs('span', center);
-      if (bigNum) bigNum.textContent = res.total;
-    }
+    // 종합 점수
+    qsa('main .font-display-lg, main .font-headline-md, main div, main span').forEach(function (el) {
+      if (/^\d+\s*\/\s*100$/.test(el.textContent.trim()) && el.children.length < 3) {
+        el.innerHTML = res.total + ' <span class="font-body-sm text-body-sm text-on-surface-variant">/ 100</span>';
+      }
+    });
     // 항목별 채점 행 — "분량" 같은 라벨 span(.w-28) 기준으로 행을 찾아 점수·바 갱신
     qsa('main span.w-28, main span[class*="w-28"]').forEach(function (labelEl) {
       var label = labelEl.textContent.trim();
@@ -610,6 +643,26 @@
   /* ===================== s41 승인 큐 ===================== */
   if (PAGE === 's41_admin_review') {
     var saved = JF.getReviewStatus();
+    // 기업 등록 공고를 승인 대기 행으로 렌더
+    var tbody = qs('tbody');
+    if (tbody) {
+      JF.getRegisteredJobs().forEach(function (rj) {
+        if (tbody.querySelector('[data-reg="' + rj.id + '"]')) return;
+        var tr = document.createElement('tr');
+        tr.className = 'border-b border-surface-container hover:bg-surface-container-low transition-colors';
+        tr.dataset.reg = rj.id;
+        tr.innerHTML =
+          '<td class="py-3 px-3 font-body-sm text-body-sm font-semibold text-on-surface">' + esc(rj.company) + '</td>' +
+          '<td class="py-3 px-3"><p class="font-body-sm text-body-sm text-on-surface font-semibold">' + esc(rj.title) + '</p>' +
+          '<div class="flex gap-1 mt-1"><span class="px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-[10px]">신규 등록</span></div></td>' +
+          '<td class="py-3 px-3"><span class="px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-[11px] text-on-surface-variant">심사 전</span></td>' +
+          '<td class="py-3 px-3 font-code-sm text-[12px] text-on-surface-variant">' + (new Date().getMonth() + 1) + '.' + new Date().getDate() + '</td>' +
+          '<td class="py-3 px-3"><span class="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-[11px] font-bold">' + (saved[rj.company] || '승인 대기') + '</span></td>' +
+          '<td class="py-3 px-3"><div class="flex gap-1"><button class="px-3 py-1 rounded-lg bg-tertiary text-on-tertiary font-label-sm text-label-sm">승인</button>' +
+          '<button class="px-3 py-1 rounded-lg bg-error-container text-on-error-container font-label-sm text-label-sm">반려</button></div></td>';
+        tbody.insertBefore(tr, tbody.firstChild);
+      });
+    }
     function statusSpan(tr) { return tr.querySelectorAll('td')[4] && tr.querySelectorAll('td')[4].querySelector('span'); }
     function applyStatus(tr, status) {
       var st = statusSpan(tr); if (!st) return;
@@ -650,6 +703,84 @@
         }
       });
     });
+  }
+
+  /* ===================== s42 일괄 등록 ===================== */
+  if (PAGE === 's42_admin') {
+    var UKEY = 'jf-upload-status';
+    function readU() { try { return JSON.parse(localStorage.getItem(UKEY) || '{}'); } catch (e) { return {}; } }
+    function paintBadge(b, approved) {
+      b.innerHTML = '<span class="material-symbols-outlined text-[16px]">' + (approved ? 'verified_user' : 'pending') + '</span>' + (approved ? '승인됨' : '보류됨');
+      b.classList.toggle('bg-tertiary-container', approved);
+      b.classList.toggle('text-on-tertiary-container', approved);
+      b.classList.toggle('bg-surface-container', !approved);
+      b.classList.toggle('text-on-surface-variant', !approved);
+    }
+    qsa('tbody tr').forEach(function (tr) {
+      var nameEl = tr.querySelectorAll('td')[1] && (tr.querySelectorAll('td')[1].querySelector('.truncate') || tr.querySelectorAll('td')[1].querySelector('.font-semibold'));
+      var badge = qsa('td button.inline-flex, td > button', tr).filter(function (x) { return /승인됨|보류됨/.test(x.textContent); })[0];
+      var name = nameEl ? nameEl.textContent.trim() : null;
+      if (!name || !badge) return;
+      var st = readU()[name];
+      if (st === '승인됨' || st === '보류됨') paintBadge(badge, st === '승인됨');
+      badge.addEventListener('click', function () {
+        var now = badge.textContent.indexOf('승인됨') === -1;
+        paintBadge(badge, now);
+        var m = readU(); m[name] = now ? '승인됨' : '보류됨';
+        localStorage.setItem(UKEY, JSON.stringify(m));
+        say(now ? '승인 처리' : '보류로 변경', name + ' — 선택 상태가 저장되었습니다.');
+      });
+    });
+  }
+
+  /* ===================== s33 지원자 목록 ===================== */
+  if (PAGE === 's33_applicants') {
+    var apps = JF.applicantsFor('1');
+    var tbody33 = qs('tbody');
+    var pageBtns = qsa('main button').filter(function (b) { return /^\d+$/.test(b.textContent.trim()); });
+    var infoEl = qsa('main span').filter(function (s) { return /\d+~\d+\s*\/\s*\d+명?/.test(s.textContent); })[0];
+    var PER = 8, page = 1;
+    var statusOf = function (sc) { return sc >= 80 ? '서류 합격' : sc >= 50 ? '서류 검토' : '불합격'; };
+    var stcls = { '서류 합격': 'bg-tertiary-fixed text-on-tertiary-fixed-variant', '서류 검토': 'bg-secondary-fixed text-on-secondary-fixed-variant', '불합격': 'bg-surface-container-highest text-on-surface-variant' };
+    function scls(sc) { return sc >= 80 ? 'text-tertiary' : sc >= 50 ? 'text-secondary' : 'text-on-surface-variant'; }
+    function render() {
+      if (!tbody33) return;
+      var slice = apps.slice((page - 1) * PER, page * PER);
+      tbody33.innerHTML = slice.map(function (a, i) {
+        var gi = (page - 1) * PER + i;
+        var st = statusOf(a.score);
+        var date = '10.' + String(19 - (gi % 15)).padStart(2, '0');
+        return '<tr class="border-b border-surface-container hover:bg-surface-container-low transition-colors">' +
+          '<td class="py-3 px-3 font-body-sm text-body-sm font-semibold text-on-surface">' + esc(a.name) + '</td>' +
+          '<td class="py-3 px-3 font-body-sm text-body-sm text-on-surface-variant">컴퓨터공학과 ' + a.year + '학년</td>' +
+          '<td class="py-3 px-3"><span class="font-code-sm text-[13px] font-bold ' + scls(a.score) + '">' + a.score + '</span></td>' +
+          '<td class="py-3 px-3 font-code-sm text-[12px] text-on-surface-variant">' + date + '</td>' +
+          '<td class="py-3 px-3"><span class="px-2 py-0.5 rounded-full ' + stcls[st] + ' font-label-sm text-[11px] font-bold">' + st + '</span></td>' +
+          '<td class="py-3 px-3"><button class="px-3 py-1 rounded-lg bg-surface-container text-on-surface font-label-sm text-label-sm">자소서 보기</button></td></tr>';
+      }).join('');
+      if (infoEl) infoEl.textContent = ((page - 1) * PER + 1) + '~' + Math.min(page * PER, apps.length) + ' / ' + apps.length + '명';
+      pageBtns.forEach(function (b) {
+        var on = parseInt(b.textContent.trim(), 10) === page;
+        b.className = 'w-8 h-8 rounded-lg font-label-md ' + (on ? 'bg-primary text-on-primary' : 'hover:bg-surface-container text-on-surface-variant');
+      });
+    }
+    // 요약 칩 — 실측 카운트로 동기화
+    var cnt = { '서류 합격': 0, '서류 검토': 0, '불합격': 0 };
+    apps.forEach(function (a) { cnt[statusOf(a.score)]++; });
+    qsa('main span, main strong').forEach(function (el) {
+      var t = el.textContent.trim();
+      var ctx = el.parentElement ? el.parentElement.textContent : '';
+      if (/^\d+$/.test(t)) {
+        if (/검토 중/.test(ctx)) el.textContent = cnt['서류 검토'];
+        else if (/서류 합격/.test(ctx)) el.textContent = cnt['서류 합격'];
+        else if (/불합격/.test(ctx)) el.textContent = cnt['불합격'];
+        else if (/총 지원자/.test(ctx)) el.textContent = apps.length;
+      }
+    });
+    pageBtns.forEach(function (b) {
+      b.addEventListener('click', function () { page = parseInt(b.textContent.trim(), 10) || 1; render(); });
+    });
+    render();
   }
 
   /* ===================== s43 스킬 사전 ===================== */
@@ -779,6 +910,17 @@
       kpis.forEach(function (k) {
         if (k.re.test(ctx) && /^\d+$/.test(el.textContent.trim())) el.textContent = k.v;
       });
+    });
+    // 프로필 완성도 게이지 — s27과 동일 공식
+    var complete = Math.min(100, Math.round(30 + JF.getProfileSkills().length * 5));
+    qsa('main span').forEach(function (el) {
+      if (/프로필 완성도/.test(el.textContent) && el.parentElement) {
+        var pctEl = el.parentElement.querySelector('.text-primary');
+        if (pctEl && /%$/.test(pctEl.textContent.trim())) pctEl.textContent = complete + '%';
+        var card = el.closest('div.bg-surface-container-lowest, div.rounded-xl');
+        var bar = card && card.querySelector('.bg-primary.h-full, .bg-primary[style*="width"]');
+        if (bar) bar.style.width = complete + '%';
+      }
     });
   }
 
