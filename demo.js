@@ -27,6 +27,7 @@
   if (PAGE === 's11_listings') {
     var jobsByCompany = {};
     JF.JOBS.forEach(function (j) { jobsByCompany[j.company] = j; });
+    JF.getRegisteredJobs().forEach(function (j) { jobsByCompany[j.company] = j; });
     var bms = JF.readBookmarkIds();
     var grid = qs('.grid.grid-cols-1, .grid');
     // 상단 "총 N건" 카운트 — 실제 공고 수로 동기화
@@ -134,7 +135,8 @@
     };
     var activeF = {};
     var sectionInput = qs('section input');
-    function cardJob(c) { return JF.JOBS.filter(function (j) { return j.id === c.dataset.jobId; })[0]; }
+    var allListJobs = JF.JOBS.concat(JF.getRegisteredJobs());
+    function cardJob(c) { return allListJobs.filter(function (j) { return j.id === c.dataset.jobId; })[0]; }
     function passesFilters(job) {
       return Object.keys(activeF).every(function (k) {
         if (k === '__match') return JF.matchJob(job).score >= activeF[k];
