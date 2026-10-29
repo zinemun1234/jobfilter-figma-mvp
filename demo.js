@@ -491,12 +491,14 @@
   /* ===================== s16 분석 ===================== */
   if (PAGE === 's16_analysis') {
     var res = JF.scoreResume(JF.currentResume());
-    // 종합 점수
-    qsa('main .font-display-lg, main .font-headline-md, main div, main span').forEach(function (el) {
-      if (/^\d+\s*\/\s*100$/.test(el.textContent.trim()) && el.children.length < 3) {
-        el.innerHTML = res.total + ' <span class="font-body-sm text-body-sm text-on-surface-variant">/ 100</span>';
-      }
-    });
+    // 종합 점수 — 게이지 원호와 중앙 숫자만 갱신 (래퍼 div를 innerHTML로 교체하면 SVG가 사라짐)
+    var gaugeCircle = qs('main svg circle[stroke-dasharray]');
+    if (gaugeCircle) {
+      gaugeCircle.setAttribute('stroke-dasharray', Math.min(res.total, 100) + ' 100');
+      var center = gaugeCircle.closest('svg').parentElement.querySelector('.absolute.inset-0');
+      var bigNum = center && qs('span', center);
+      if (bigNum) bigNum.textContent = res.total;
+    }
     // 항목별 채점 행 — "분량" 같은 라벨 span(.w-28) 기준으로 행을 찾아 점수·바 갱신
     qsa('main span.w-28, main span[class*="w-28"]').forEach(function (labelEl) {
       var label = labelEl.textContent.trim();
