@@ -800,7 +800,7 @@ var JF_ICONS = {
           toast('공고가 반려되었습니다');
         });
       }
-      if (b.textContent.indexOf('분류 키워드') > -1) b.addEventListener('click', function () { toast('키워드 사전 조정', '자동 분류 규칙을 수정합니다 (F-43 연계).'); });
+      if (b.textContent.indexOf('분류 키워드') > -1) b.addEventListener('click', function () { toast('분류 규칙 조정', '자동 분류 규칙 편집은 다음 단계에서 제공됩니다.'); });
     });
   }
 
