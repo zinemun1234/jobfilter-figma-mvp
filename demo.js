@@ -1520,5 +1520,405 @@
     });
   }
 
+  /* ===================== s61 모의 면접 ===================== */
+  if (PAGE === 's61_interview') {
+    var AKEY = 'jf-interview-answers';
+    function readA() { try { return JSON.parse(localStorage.getItem(AKEY) || '{}'); } catch (e) { return {}; } }
+    function writeA(a) { localStorage.setItem(AKEY, JSON.stringify(a)); }
+    var sel = qs('#mi-job'), list = qs('#mi-list');
+    var allJobs = JF.JOBS.concat(JF.getRegisteredJobs());
+    allJobs.forEach(function (j) {
+      var o = document.createElement('option');
+      o.value = j.id; o.textContent = j.company + ' — ' + j.title;
+      sel.appendChild(o);
+    });
+    var param = new URLSearchParams(location.search).get('job');
+    if (param && sel.querySelector('option[value="' + param + '"]')) sel.value = param;
+    function questionsFor(job) {
+      var qq = [];
+      (job.skills || []).slice(0, 2).forEach(function (s) {
+        qq.push({ tag: '기술', q: s + '를(을) 활용해 문제를 해결한 경험을 구체적인 수치와 함께 설명해 주세요.' });
+      });
+      if (job.plus && job.plus[0]) qq.push({ tag: '기술', q: '우대 요건에 ' + job.plus[0] + '가 있습니다 — 관련 경험이 없다면 어떻게 빠르게 준비하시겠습니까?' });
+      var duty = (job.duties && job.duties[0]) ? job.duties[0].replace(/[.。]+$/, '') : '해당 직무의 핵심 업무';
+      qq.push({ tag: '직무', q: '"' + (duty.length > 36 ? duty.slice(0, 36) + '…' : duty) + '" 업무와 관련된 본인의 프로젝트·실습 경험을 설명해 주세요.' });
+      qq.push({ tag: 'STAR', q: '팀 프로젝트에서 갈등이나 실패를 극복한 경험을 상황-행동-결과 순으로 설명해 주세요.' });
+      qq.push({ tag: '인성', q: job.company + '에 지원한 이유와 입사 후 기여하고 싶은 부분을 말씀해 주세요.' });
+      return qq;
+    }
+    function jobById(id) { return allJobs.filter(function (j) { return j.id === id; })[0] || allJobs[0]; }
+    // 채점 — 자소서 분석과 동일한 7개 항목, 키워드 기준만 선택 공고 스킬로 교체
+    var VAGUE = /열심히|최선을 다|노력하겠습니다|배우고 싶습니다|관심이 많습니다|성실하게|열정적으로/g;
+    var NUM = /\d[\d,.]*\s*(?:%|ms|QPS|TPS|노드|명|개|배|점|억|만|건|개월|년|위|등)/g;
+    function gradeAnswer(t, job) {
+      var sents = t.split(/\n+|(?<=[.!?])\s+/).map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 1; });
+      var body = sents.join(' '), chars = t.length;
+      var vague = (body.match(VAGUE) || []).length;
+      var numbers = new Set(body.match(NUM) || []).size;
+      var skills = (job.skills || []).concat(job.plus || []);
+      var kwHit = skills.filter(function (s) { return body.indexOf(s) > -1; });
+      var avgS = sents.length ? Math.round(body.length / sents.length) : 0;
+      var items = [
+        { label: '분량', score: chars >= 300 ? 10 : chars >= 200 ? 8 : chars >= 120 ? 6 : chars >= 60 ? 4 : 2, max: 10 },
+        { label: '표현', score: Math.max(3, 15 - vague * 3), max: 15 },
+        { label: '수치', score: Math.min(15, numbers * 5), max: 15 },
+        { label: 'STAR 구조', score: (/수강|프로젝트|과제|문제|배경|목표|당시|환경/.test(body) ? 8 : 0) + (/설계|구현|개발|적용|도입|주도|분석|튜닝|최적화|해결|개선|학습|공부/.test(body) ? 8 : 0) + (/결과|향상|개선|단축|달성|끌어올|기여|수상|완성|%|ms/.test(body) ? 9 : 0), max: 25 },
+        { label: '직무 키워드', score: skills.length ? Math.round(kwHit.length / skills.length * 20) : 0, max: 20 },
+        { label: '문장 길이', score: avgS <= 60 ? 10 : avgS <= 80 ? 8 : avgS <= 110 ? 6 : 3, max: 10 },
+        { label: '협업', score: /팀|협업|리드|소통|리뷰|동료/.test(body) ? 5 : 0, max: 5 }
+      ];
+      var weak = [];
+      if (kwHit.length === 0) weak.push('직무 키워드 미포함 — ' + skills.slice(0, 3).join('·') + ' 등 공고 스킬을 답변에 녹여보세요.');
+      if (numbers === 0) weak.push('정량 근거 부재 — 처리량·기간·성과 등 수치를 추가하세요.');
+      if (vague > 0) weak.push('공허한 표현 ' + vague + '건 — "열심히"류 대신 구체 행동으로 바꾸세요.');
+      if (avgS > 80) weak.push('문장이 깁니다 — 평균 ' + avgS + '자, 60자 내외 권장.');
+      return { items: items, total: items.reduce(function (n, s) { return n + s.score; }, 0), weak: weak, chars: chars, sents: sents.length };
+    }
+    var grades = {};
+    function stats() {
+      var a = readA(), job = jobById(sel.value), qs2 = questionsFor(job);
+      var done = qs2.filter(function (q, i) { var v = a[job.id + '_' + i]; return v && v.trim().length > 0; }).length;
+      qs('#mi-q-count').innerHTML = qs2.length + '<span class="font-body-sm text-body-sm text-on-surface-variant">개</span>';
+      qs('#mi-done').innerHTML = done + '<span class="font-body-sm text-body-sm text-on-surface-variant">/' + qs2.length + '</span>';
+      qs('#mi-done-bar').style.width = (qs2.length ? Math.round(done / qs2.length * 100) : 0) + '%';
+      var g = Object.keys(grades).filter(function (k) { return k.indexOf(job.id + '_') === 0; }).map(function (k) { return grades[k]; });
+      qs('#mi-avg').textContent = g.length ? Math.round(g.reduce(function (x, y) { return x + y; }, 0) / g.length) + '점' : '—';
+    }
+    function render() {
+      var job = jobById(sel.value), a = readA();
+      list.innerHTML = '';
+      questionsFor(job).forEach(function (q, i) {
+        var card = document.createElement('div');
+        card.className = 'bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md';
+        card.innerHTML =
+          '<div class="flex items-start gap-space-sm">' +
+          '<span class="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-label-sm shrink-0">' + q.tag + '</span>' +
+          '<h3 class="font-headline-sm text-headline-sm text-on-surface">Q' + (i + 1) + '. ' + esc(q.q) + '</h3></div>' +
+          '<textarea rows="3" class="w-full rounded-lg bg-surface-container-low p-space-md font-body-md text-body-md text-on-surface focus:outline-none focus:bg-surface-container-high transition-colors" placeholder="상황(S) → 행동(A) → 결과(R) 순서로, 수치를 넣어 답변해 보세요">' + esc(a[job.id + '_' + i] || '') + '</textarea>' +
+          '<div class="flex items-center justify-between">' +
+          '<span class="font-code-sm text-code-sm text-on-surface-variant jf-len">0자</span>' +
+          '<div class="flex items-center gap-space-xs">' +
+          '<button class="px-space-md py-space-xs rounded-lg bg-surface-container-low hover:bg-surface-container font-label-md text-label-md text-on-surface-variant jf-save">저장</button>' +
+          '<button class="px-space-md py-space-xs rounded-lg bg-primary text-on-primary font-label-md text-label-md jf-grade">채점</button>' +
+          '</div></div>' +
+          '<div class="jf-result hidden rounded-lg bg-surface-container-low p-space-md"></div>';
+        var ta = card.querySelector('textarea'), lenEl = card.querySelector('.jf-len'), res = card.querySelector('.jf-result');
+        function sync() { lenEl.textContent = ta.value.trim().length + '자'; }
+        ta.addEventListener('input', sync); sync();
+        card.querySelector('.jf-save').addEventListener('click', function () {
+          var m = readA(); m[job.id + '_' + i] = ta.value; writeA(m); stats();
+          say('답변이 저장되었습니다', '다시 열어도 유지됩니다.');
+        });
+        card.querySelector('.jf-grade').addEventListener('click', function () {
+          var t = ta.value.trim();
+          if (t.length < 10) { say('답변이 너무 짧습니다', '10자 이상 작성 후 채점하세요.'); return; }
+          var r = gradeAnswer(t, job);
+          grades[job.id + '_' + i] = r.total;
+          res.className = 'jf-result rounded-lg bg-surface-container-low p-space-md flex flex-col gap-space-sm';
+          var chips = r.items.map(function (it) {
+            var ok = it.score >= it.max * 0.6;
+            return '<span class="px-2 py-0.5 rounded font-label-sm text-[11px] ' + (ok ? 'bg-tertiary-fixed text-on-tertiary-fixed-variant' : 'bg-error-container text-on-error-container') + '">' + it.label + ' ' + it.score + '/' + it.max + '</span>';
+          }).join('');
+          var tips = r.weak.slice(0, 2).map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('');
+          res.innerHTML = '<div class="flex items-center justify-between"><span class="font-label-md text-label-md font-bold">채점 결과 — ' + r.total + '점</span><span class="font-code-sm text-code-sm text-on-surface-variant">' + r.chars + '자 · ' + r.sents + '문장</span></div>' +
+            '<div class="flex flex-wrap gap-space-xs">' + chips + '</div>' +
+            (tips ? '<ul class="list-disc pl-5 font-body-sm text-body-sm text-on-surface-variant">' + tips + '</ul>' : '<p class="font-body-sm text-body-sm text-tertiary">보완 포인트가 감지되지 않았습니다.</p>');
+          stats();
+        });
+        list.appendChild(card);
+      });
+      stats();
+    }
+    sel.addEventListener('change', render);
+    render();
+  }
+
+  /* ===================== s42 엑셀/CSV 업로드 → 직군 자동 분류 ===================== */
+  if (PAGE === 's42_admin') {
+    var RKEY = 'jf-upload-rows';
+    var AKEY2 = 'jf-upload-status';
+    function readU() { try { return JSON.parse(localStorage.getItem(AKEY2) || '{}'); } catch (e) { return {}; } }
+    function writeU(m) { localStorage.setItem(AKEY2, JSON.stringify(m)); }
+    var fileInput = document.createElement('input');
+    fileInput.type = 'file'; fileInput.accept = '.csv,.tsv,.xlsx,.xls';
+    fileInput.style.display = 'none';
+    document.body.appendChild(fileInput);
+    // 업로드 트리거 — Step 01 카드 + '다른 파일' 버튼
+    qsa('main div').forEach(function (d) {
+      if (/파일 업로드/.test(d.textContent) && d.querySelectorAll('*').length <= 6 && d.closest('.grid')) {
+        d.style.cursor = 'pointer';
+        d.addEventListener('click', function () { fileInput.click(); });
+      }
+    });
+    // 컬럼 매핑 — 헤더명 유연 처리
+    function mapCols(header) {
+      var m = { company: -1, title: -1, skills: -1, location: -1, deadline: -1 };
+      header.forEach(function (h, i) {
+        h = String(h);
+        if (/회사|기업|company/i.test(h)) m.company = i;
+        else if (/공고|제목|직무|포지션|title|position/i.test(h)) m.title = i;
+        else if (/스킬|기술|키워드|skill|요구/i.test(h)) m.skills = i;
+        else if (/지역|위치|근무|location/i.test(h)) m.location = i;
+        else if (/마감|기한|deadline|due|날짜/i.test(h)) m.deadline = i;
+      });
+      if (m.company === -1 && m.title === -1) { m.company = 0; m.title = 1; m.skills = 2; m.location = 3; m.deadline = 4; }
+      return m;
+    }
+    function parseCSVText(text) {
+      var delim = text.indexOf('\t') > -1 && text.indexOf(',') === -1 ? '\t' : ',';
+      var rows = [], row = [], cur = '', inQ = false;
+      for (var i = 0; i < text.length; i++) {
+        var c = text[i];
+        if (inQ) {
+          if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else inQ = false; }
+          else cur += c;
+        } else if (c === '"') inQ = true;
+        else if (c === delim) { row.push(cur); cur = ''; }
+        else if (c === '\n' || c === '\r') {
+          if (c === '\r' && text[i + 1] === '\n') i++;
+          row.push(cur); rows.push(row); row = []; cur = '';
+        } else cur += c;
+      }
+      if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+      return rows.filter(function (r) { return r.join('').trim() !== ''; });
+    }
+    function rowsFromGrid(grid) {
+      var hasHeader = grid[0] && grid[0].some(function (h) { return /회사|기업|공고|제목|직무|스킬|기술|키워드|마감|company|title|skill/i.test(String(h)); });
+      var m = mapCols(hasHeader ? grid[0] : []);
+      return (hasHeader ? grid.slice(1) : grid).map(function (r) {
+        return {
+          company: String(r[m.company] || '').trim() || '기업 미기재',
+          title: String(r[m.title] || '').trim() || '공고명 미기재',
+          skills: String(r[m.skills] || '').trim(),
+          location: String(r[m.location] || '').trim(),
+          deadline: String(r[m.deadline] || '').trim()
+        };
+      }).filter(function (r) { return r.company !== '기업 미기재' || r.title !== '공고명 미기재'; });
+    }
+    var DEV_RE = /개발|엔지니어|프론트엔드|백엔드|풀스택|모바일|iOS|Android|안드로이드|데이터|보안|인프라|DevOps|SRE|클라우드|SW|소프트웨어|IT|플랫폼|프로그래머|AI|머신러닝|ML|QA|서버|시스템|네트워크/i;
+    function classify(r) {
+      var text = r.company + ' ' + r.title + ' ' + r.skills;
+      var dev = DEV_RE.test(text);
+      var tokens = JF.extractTokens(r.skills + ' ' + r.title);
+      var expired = false;
+      if (r.deadline) {
+        var d = new Date(r.deadline.replace(/[.\/]/g, '-'));
+        if (!isNaN(d.getTime()) && d < new Date()) expired = true;
+      }
+      return { dev: dev, tokens: tokens, expired: expired,
+        conf: Math.min(98, Math.round(tokens.length * 18 + (dev ? 34 : 4))) };
+    }
+    function rowHTML(r, c, i) {
+      var excluded = !c.dev || c.expired;
+      var badge = !c.dev
+        ? '<span class="inline-flex items-center gap-space-xs px-space-sm py-1 rounded-full font-label-sm text-label-sm bg-surface-container text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">block</span><span>관련 없음 — 컴공 외 직군</span></span>'
+        : c.expired
+          ? '<span class="inline-flex items-center gap-space-xs px-space-sm py-1 rounded-full font-label-sm text-label-sm bg-error-container text-on-error-container"><span class="material-symbols-outlined text-[16px]">event_busy</span><span>마감 경과 — 자동 제외</span></span>'
+          : '<span class="inline-flex items-center gap-space-xs px-space-sm py-1 rounded-full font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed-variant"><span class="material-symbols-outlined text-[16px]">pending</span><span>검수 ' + c.conf + '% — 스킬 ' + c.tokens.length + '종</span></span>';
+      var chips = c.tokens.slice(0, 4).map(function (t) { return '<span class="px-space-xs py-0.5 rounded bg-surface-container text-primary font-code-sm text-code-sm">' + esc(t) + '</span>'; }).join('') || '<span class="text-on-surface-variant font-body-sm">—</span>';
+      var approve = excluded
+        ? '<span class="font-body-sm text-body-sm text-outline">제외</span>'
+        : '<button class="jf-up-badge inline-flex items-center gap-space-xs px-space-sm py-1 rounded-full font-label-sm text-label-sm bg-surface-container text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">pending</span>보류됨</button>';
+      return '<tr class="hover:bg-surface-container-low transition-colors' + (excluded ? ' opacity-50' : '') + '" data-row="' + i + '">' +
+        '<td class="py-space-md px-space-lg text-center font-code-sm text-code-sm text-on-surface-variant">' + (i + 1) + '</td>' +
+        '<td class="py-space-md px-space-md align-middle"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-label-md text-primary font-bold">' + esc(r.company[0] || '?') + '</div><div class="flex flex-col min-w-0"><span class="font-label-md text-label-md text-on-surface truncate font-semibold">' + esc(r.company) + '</span><span class="font-code-sm text-code-sm text-on-surface-variant">' + esc(r.location || '—') + '</span></div></div></td>' +
+        '<td class="py-space-md px-space-md align-middle"><div class="flex flex-col"><span class="font-label-md text-label-md text-on-surface">' + esc(r.title) + '</span><span class="font-body-sm text-body-sm text-on-surface-variant">마감 ' + esc(r.deadline || '미기재') + '</span></div></td>' +
+        '<td class="py-space-md px-space-md align-middle">' + badge + '</td>' +
+        '<td class="py-space-md px-space-md align-middle"><div class="flex flex-wrap gap-space-xs">' + chips + '</div></td>' +
+        '<td class="py-space-md px-space-md align-middle text-center"><span class="font-code-sm text-code-sm font-bold px-space-sm py-0.5 rounded ' + (c.conf >= 70 ? 'text-tertiary bg-tertiary-fixed' : c.conf >= 40 ? 'text-secondary bg-secondary-fixed' : 'text-on-surface-variant bg-surface-container') + '">' + c.conf + '%</span></td>' +
+        '<td class="py-space-md px-space-lg align-middle text-right">' + approve + '</td></tr>';
+    }
+    function paintApprove(b, approved) {
+      b.innerHTML = '<span class="material-symbols-outlined text-[16px]">' + (approved ? 'verified_user' : 'pending') + '</span>' + (approved ? '승인됨' : '보류됨');
+      b.className = 'jf-up-badge inline-flex items-center gap-space-xs px-space-sm py-1 rounded-full font-label-sm text-label-sm ' + (approved ? 'bg-tertiary-container text-on-tertiary-container' : 'bg-surface-container text-on-surface-variant');
+    }
+    var uploadData = [];
+    function wireApprove() {
+      var m = readU();
+      qsa('tbody tr .jf-up-badge').forEach(function (b) {
+        var tr = b.closest('tr'), idx = tr ? +tr.dataset.row : -1, r = uploadData[idx];
+        if (!r) return;
+        var key = r.company;
+        paintApprove(b, m[key] === '승인됨');
+        b.addEventListener('click', function () {
+          var cur = readU(), now = cur[key] !== '승인됨';
+          paintApprove(b, now);
+          cur[key] = now ? '승인됨' : '보류됨';
+          writeU(cur);
+          say(now ? '승인 처리' : '보류로 변경', r.company + ' — ' + r.title);
+        });
+      });
+    }
+    function renderUpload(rows, fname) {
+      var tbody = qs('tbody');
+      if (!tbody || !rows.length) return;
+      uploadData = rows;
+      var classified = rows.map(classify);
+      var valid = classified.filter(function (c) { return c.dev && !c.expired; }).length;
+      var offTopic = classified.filter(function (c) { return !c.dev; }).length;
+      var expired = classified.filter(function (c) { return c.dev && c.expired; }).length;
+      tbody.innerHTML = classified.map(function (c, i) { return rowHTML(rows[i], c, i); }).join('');
+      // KPI 카드 수치 동기화
+      qsa('main .font-display-lg').forEach(function (el) {
+        var ctx = (el.closest('div[class*="bg-surface"]') || {}).textContent || '';
+        if (/총 파싱 공고/.test(ctx)) el.textContent = rows.length;
+        else if (/유효 데이터/.test(ctx)) el.textContent = valid;
+        else if (/중복|관련 없음|제외/.test(ctx) && !/마감/.test(ctx)) el.textContent = offTopic;
+        else if (/마감일 경과/.test(ctx)) el.textContent = expired;
+      });
+      // 단계·요약 텍스트 동기화
+      qsa('main span, main p').forEach(function (el) {
+        var t = el.textContent;
+        if (/건 행 구문 분석 완료/.test(t)) el.textContent = rows.length + '건 행 구문 분석 완료';
+        else if (/sample_jobs\.xlsx/.test(t) && fname) el.textContent = '스킬 사전 ' + '키워드 대조로 적합도 산출 — ' + fname;
+        else if (/^전체 \d+건 표시/.test(t.trim())) el.textContent = '전체 ' + rows.length + '건 표시 — 유효 ' + valid + '건 · 자동 제외 ' + (offTopic + expired) + '건 (관련 없음 ' + offTopic + ' · 마감 경과 ' + expired + ')';
+        else if (/^\d+건 승인됨/.test(t.trim())) el.textContent = valid + '건 승인 가능 (전체 ' + rows.length + '건 중)';
+      });
+      wireApprove();
+    }
+    // 파일 처리 — CSV/TSV 네이티브, XLSX는 SheetJS 동적 로드
+    function handleRows(grid, fname) {
+      var rows = rowsFromGrid(grid);
+      if (!rows.length) { say('파싱 실패', '표 형식의 데이터를 찾지 못했습니다 — 샘플 파일 형식을 참고하세요.'); return; }
+      localStorage.setItem(RKEY, JSON.stringify({ rows: rows, fname: fname }));
+      renderUpload(rows, fname);
+      say('파일 파싱 완료 — ' + rows.length + '건', '컴공 적합 직군만 검수 대상으로 자동 분류되었습니다.');
+    }
+    fileInput.addEventListener('change', function () {
+      var f = fileInput.files[0];
+      if (!f) return;
+      if (/\.(xlsx|xls)$/i.test(f.name)) {
+        if (window.XLSX) { parseXlsx(f); return; }
+        var s = document.createElement('script');
+        s.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+        s.onload = function () { parseXlsx(f); };
+        s.onerror = function () { say('XLSX 엔진 로드 실패', '네트워크를 확인하거나 CSV로 저장해 업로드하세요.'); };
+        document.head.appendChild(s);
+      } else {
+        var rd = new FileReader();
+        rd.onload = function () { handleRows(parseCSVText(String(rd.result || '')), f.name); };
+        rd.readAsText(f, 'utf-8');
+      }
+    });
+    function parseXlsx(f) {
+      var rd = new FileReader();
+      rd.onload = function () {
+        try {
+          var wb = XLSX.read(new Uint8Array(rd.result), { type: 'array' });
+          var grid = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' });
+          handleRows(grid.map(function (r) { return r.map(function (c) { return String(c); }); }), f.name);
+        } catch (e) { say('XLSX 파싱 실패', e.message); }
+      };
+      rd.readAsArrayBuffer(f);
+    }
+    // '다른 파일' 버튼 → 파일 선택
+    qsa('main button').forEach(function (b) {
+      if (/다른 파일/.test(b.textContent)) b.addEventListener('click', function () { fileInput.click(); });
+      // 샘플 데이터 버튼 — 파일 없이도 파이프라인 테스트 가능하게
+      if (/일괄 게시/.test(b.textContent)) {
+        var sample = document.createElement('button');
+        sample.className = 'px-space-lg py-2.5 rounded-lg border border-surface-container-high font-label-md text-label-md text-on-surface flex items-center gap-2';
+        sample.innerHTML = '<span class="material-symbols-outlined text-[18px]">science</span>샘플 파일로 테스트';
+        sample.addEventListener('click', function () {
+          var sampleRows = [
+            { company: '샘플테크', title: '백엔드 개발자 (신입)', skills: 'Java Spring Boot MySQL', location: '서울 강남구', deadline: '2027-01-15' },
+            { company: '데이터랩', title: '데이터 엔지니어', skills: 'Python Spark Airflow SQL', location: '성남 분당구', deadline: '2026-12-20' },
+            { company: '시큐어넷', title: '보안 엔지니어', skills: '네트워크 보안 Linux 침투테스트', location: '서울 종로구', deadline: '2026-12-31' },
+            { company: '모바일랩', title: 'iOS 앱 개발자', skills: 'Swift UIKit Combine', location: '서울 송파구', deadline: '2027-02-01' },
+            { company: '글로벌상사', title: '해외 영업직 채용', skills: '영어 무역', location: '서울 중구', deadline: '2026-12-30' },
+            { company: '인사컨설', title: 'HR 채용 담당자', skills: '채용 노무', location: '서울 마포구', deadline: '2026-12-28' },
+            { company: '올드시스템', title: '레거시 시스템 개발자', skills: 'C++ Linux', location: '경기 수원', deadline: '2020-05-01' }
+          ];
+          localStorage.setItem(RKEY, JSON.stringify({ rows: sampleRows, fname: 'sample_jobs.csv (내장 샘플)' }));
+          renderUpload(sampleRows, 'sample_jobs.csv (내장 샘플)');
+          say('샘플 데이터 로드 — 7건', '개발 4 · 비개발 제외 2 · 마감 경과 1 건으로 자동 분류됩니다.');
+        });
+        b.parentElement.insertBefore(sample, b);
+      }
+    });
+    // 일괄 게시 → 승인된 업로드 행을 등록 공고 + 승인 큐로
+    qsa('main button').forEach(function (b) {
+      if (/일괄 게시/.test(b.textContent)) b.addEventListener('click', function () {
+        var m = readU(), n = 0;
+        var reg = JF.getRegisteredJobs();
+        uploadData.forEach(function (r) {
+          var c = classify(r), key = r.company;
+          var dup = reg.filter(function (x) { return x.company === r.company && x.title === r.title; })[0];
+          if (c.dev && !c.expired && m[key] === '승인됨' && !dup) {
+            JF.addRegisteredJob({ id: 'up-' + Date.now() + '-' + n, company: r.company, title: r.title, type: '신입', location: r.location || '미지정', skills: c.tokens, plus: [], dday: 'D-30' });
+            reg.unshift({ company: r.company, title: r.title });
+            n++;
+          }
+          if (c.dev && !c.expired && m[key] === '승인됨') JF.setReviewStatus(r.company, '승인 대기');
+        });
+        if (n) say(n + '건이 승인 큐로 게시되었습니다', '공고 승인 화면에서 최종 게시를 진행하세요.');
+      });
+    });
+    // 이전 업로드 복원
+    try {
+      var savedUp = JSON.parse(localStorage.getItem(RKEY) || 'null');
+      if (savedUp && savedUp.rows && savedUp.rows.length) renderUpload(savedUp.rows, savedUp.fname);
+    } catch (e) {}
+  }
+
+  /* ===================== s27 기술 스택 로드맵 ===================== */
+  if (PAGE === 's27_profile') {
+    function targetJobs() {
+      var ids = {};
+      JF.loadBoard().forEach(function (c) { ids[c.jobId] = 1; });
+      JF.readBookmarkIds().forEach(function (id) { ids[id] = 1; });
+      var t = JF.JOBS.filter(function (j) { return ids[j.id]; });
+      return t.length ? t : JF.JOBS.slice().sort(function (a, b) { return JF.matchJob(b).score - JF.matchJob(a).score; }).slice(0, 3);
+    }
+    function renderRoadmap() {
+      var mine = JF.getProfileSkills().map(function (s) { return s.canonical; });
+      var jobs = targetJobs();
+      var freq = {}, byJob = {};
+      jobs.forEach(function (j) {
+        (j.skills || []).concat(j.plus || []).forEach(function (s) {
+          if (mine.indexOf(s) > -1) return;
+          freq[s] = (freq[s] || 0) + 1;
+          (byJob[s] = byJob[s] || []).push(j.company);
+        });
+      });
+      var gaps = Object.keys(freq).sort(function (a, b) { return freq[b] - freq[a]; }).slice(0, 6);
+      var catalog = qsa('main section').filter(function (s) { return /핵심 기술 스택 카탈로그/.test(s.textContent); })[0];
+      var old = qs('#jf-roadmap');
+      if (old) old.remove();
+      if (!catalog) return;
+      var sec = document.createElement('section');
+      sec.id = 'jf-roadmap';
+      sec.className = catalog.className;
+      var head = '<h2 class="font-headline-sm text-headline-sm text-on-surface">기술 스택 로드맵</h2>' +
+        '<p class="font-body-sm text-body-sm text-on-surface-variant">' + jobs.length + '개 목표 공고(북마크·지원 관리)의 요구 스킬에서 내 미보유 스킬을 빈도순으로 정렬했습니다.</p>';
+      if (!gaps.length) {
+        sec.innerHTML = head + '<div class="flex items-center gap-space-sm text-tertiary font-body-sm text-body-sm"><span class="material-symbols-outlined text-[18px]">verified</span>목표 공고의 요구 스킬을 모두 보유하고 있습니다.</div>';
+      } else {
+        var items = gaps.map(function (g, i) {
+          return '<div class="flex items-center gap-space-md p-space-sm rounded-lg bg-surface-container-low">' +
+            '<span class="w-6 h-6 rounded-full ' + (i < 3 ? 'bg-error-container text-on-error-container' : 'bg-secondary-fixed text-on-secondary-fixed-variant') + ' font-label-sm text-[11px] font-bold flex items-center justify-center shrink-0">' + (i + 1) + '</span>' +
+            '<div class="flex flex-col min-w-0 flex-1"><span class="font-label-md text-label-md text-on-surface font-semibold">' + esc(g) + '</span>' +
+            '<span class="font-body-sm text-body-sm text-on-surface-variant truncate">' + freq[g] + '개 공고 요구 — ' + esc(byJob[g].slice(0, 3).join('·')) + '</span></div>' +
+            '<button class="jf-rm-add px-space-sm py-1 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm shrink-0" data-skill="' + esc(g) + '">+ 스킬 추가</button></div>';
+        }).join('');
+        sec.innerHTML = head + '<div class="flex flex-col gap-space-xs">' + items + '</div>';
+      }
+      catalog.parentElement.insertBefore(sec, catalog.nextSibling);
+      qsa('.jf-rm-add', sec).forEach(function (b) {
+        b.addEventListener('click', function () {
+          var skills = JF.getProfileSkills();
+          skills.push({ canonical: b.dataset.skill, level: '중' });
+          JF.saveProfileSkills(skills);
+          say('로드맵 스킬 추가', b.dataset.skill + '가 프로필에 반영되었습니다 — 매칭 점수가 갱신됩니다.');
+          renderRoadmap();
+        });
+      });
+    }
+    renderRoadmap();
+    // 프로필 스킬 저장 시 로드맵도 갱신
+    var rmSave = document.getElementById('save-btn');
+    if (rmSave) rmSave.addEventListener('click', function () { setTimeout(renderRoadmap, 0); });
+  }
+
   console.log('[JobFilter] demo.js hydrated —', PAGE);
 })();

@@ -283,6 +283,7 @@ var JF_ICONS = {
     jobs: 's11_listings.html',
     applications: 's14_kanban.html',
     'resume-coaching': 's15_coverletter.html',
+    interview: 's61_interview.html',
     bookmarks: 's13_bookmarks.html',
     calendar: 's10_dashboard.html',
     profile: 's27_profile.html',
@@ -303,6 +304,7 @@ var JF_ICONS = {
     s14_kanban: 'applications',
     s15_coverletter: 'resume-coaching',
     s16_analysis: 'resume-coaching',
+    s61_interview: 'interview',
     s27_profile: 'profile',
     s31_company_post: 'company-post',
     s33_applicants: 'company-applicants',
@@ -323,6 +325,7 @@ var JF_ICONS = {
         { path: 'jobs', icon: 'work_outline', text: '공고 목록' },
         { path: 'applications', icon: 'assignment_turned_in', text: '지원 관리' },
         { path: 'resume-coaching', icon: 'edit_note', text: '자소서 코칭' },
+        { path: 'interview', icon: 'record_voice_over', text: '모의 면접' },
         { path: 'bookmarks', icon: 'bookmark_border', text: '북마크' },
         { path: 'profile', icon: 'person_outline', text: '프로필' }
       ]
@@ -917,3 +920,20 @@ var JF_ICONS = {
 
   console.log('[JobFilter] app.js loaded —', PAGE);
 })();
+
+/* ---------- figma-project.html 보드용: iframe 안에서 문서 높이를 부모에게 보고 ---------- */
+(function () {
+  if (window.parent === window) return;
+  function report() {
+    var h = Math.max(document.body ? document.body.scrollHeight : 0,
+      document.documentElement ? document.documentElement.scrollHeight : 0);
+    try { window.parent.postMessage({ __jfb: 'h', h: h }, '*'); } catch (e) {}
+  }
+  window.addEventListener('message', function (e) {
+    if (e.data && e.data.__jfb === 'ping') report();
+  });
+  window.addEventListener('load', function () { report(); setTimeout(report, 600); setTimeout(report, 2000); });
+  window.addEventListener('resize', report);
+  if (document.readyState === 'complete') report();
+})();
+
